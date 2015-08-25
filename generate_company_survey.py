@@ -1,5 +1,6 @@
 import copy
 import json
+import os.path
 import sys
 import uuid
 
@@ -140,21 +141,23 @@ if "form" in overlay_survey_json_data:
 
 paginate()
 
-overlay_frame_json_file_path = "./{0}/overlay_frame.json".format(company_name)
-overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
-
 company_frame_json_data = read_json_file("./master_frame.json")
 
-for entry in overlay_frame_json_data:
-    if "children" in entry:
-        for child_entry in entry["children"]:
-            if "DELETE_ID" in child_entry:
-                print("delete")
-            elif "BEFORE_ID" in child_entry:
-                print("before")
-            elif "AFTER_ID" in child_entry:
-                insert_frame_question_after(child_entry["AFTER_ID"],
-                                            child_entry)
+overlay_frame_json_file_path = "./{0}/overlay_frame.json".format(company_name)
+if os.path.isfile(overlay_frame_json_file_path):
+    # Merge overlay frame with master.
+    overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
+
+    for entry in overlay_frame_json_data:
+        if "children" in entry:
+            for child_entry in entry["children"]:
+                if "DELETE_ID" in child_entry:
+                    print("delete")
+                elif "BEFORE_ID" in child_entry:
+                    print("before")
+                elif "AFTER_ID" in child_entry:
+                    insert_frame_question_after(child_entry["AFTER_ID"],
+                                                child_entry)
 
 # Add survey frame. Last question goes to the end of the survey.
 PREPENDING_QUESTIONS_IN_FRAME = len(company_frame_json_data) - 1
