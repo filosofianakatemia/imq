@@ -1,0 +1,56 @@
+/*
+* Survey title.
+*/
+.fs-chrome > .content .survey h1 {
+  color: #027180;
+}
+
+/*
+* Question title.
+*/
+.fs-chrome > .content .survey h2 {
+  color: #027180;
+}
+
+/*
+* Question description.
+*/
+.fs-chrome > .content .survey p {
+  color: #636363;
+}
+
+/*
+* Survey progress
+*/
+
+.fs-chrome > .content .survey > .survey-header .survey-progress-outer .survey-progress-number {
+  color: #027180;
+}
+.fs-chrome > .content .survey > .survey-header .survey-progress-outer .survey-progress-inner {
+  background-color: #027180;
+}
+.fs-chrome > .content .survey.error .survey-progress-outer .survey-progress-inner {
+  background-color: #ff7c00;
+}
+
+/*
+* Choice label
+*/
+.fs-chrome > .content .survey .question-body .label {
+  color: #636363;
+}
+
+.fs-chrome > .content .survey-footer {
+  display: none;
+}
+
+/*
+* Buttons
+*/
+.fs-chrome input[type="submit"].button {
+  border-radius: 0;
+
+}
+.fs-chrome input[type="submit"].button:hover {
+  color: #027180;
+}
