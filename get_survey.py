@@ -7,7 +7,7 @@ import requests
 
 survey_id = sys.argv[1]
 
-email = "imq@filosofianakatemia.fi"
+email = input('Email: ')
 password = getpass.getpass()
 headers = {"Accept": "application/json"}
 
@@ -15,11 +15,11 @@ headers = {"Accept": "application/json"}
 get_survey_url = "https://fluidsurveys.com/api/v2/surveys/%s/?structure" % \
   survey_id
 
-get_survey_response = requests.get(get_survey_url,
-                                   auth=(email, password), headers=headers)
-if get_survey_response.status_code == 200:
+get_survey_details = requests.get(get_survey_url,
+                                  auth=(email, password), headers=headers)
+if get_survey_details.status_code == 200:
     # http://stackoverflow.com/a/12944035
-    survey_json = json.loads(get_survey_response.text)
+    survey_json = json.loads(get_survey_details.text)
     print(json.dumps(survey_json, indent=4, sort_keys=True))
 
 else:
