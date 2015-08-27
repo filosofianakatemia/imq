@@ -133,6 +133,9 @@ with open("./questions_1.4.txt") as questions_file:
         master_json_data["form"][place]["children"].append(question)
         master_json_data_flattened["form"][0]["children"].append(question)
 
+    # http://stackoverflow.com/q/845058
+    print("Added {0} questions".format(index + 1))
+
 # Uncomment for debugging.
 # print(json.dumps(master_json_data["form"][0]["children"],
 #                  indent=4, sort_keys=True))

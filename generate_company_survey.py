@@ -106,7 +106,6 @@ def paginate():
             company_survey_json_data["form"][
                 index + 1]["children"].extend(sliced_questions)
 
-
 master_survey_json_flattened_file_path = "./master_latest_flattened.json"
 
 company_name = sys.argv[1]
@@ -126,6 +125,10 @@ company_survey_json_data["title"] = overlay_survey_json_data["title"]
 company_survey_json_data["IMQ_VERSION"] = company_survey_json_data["version"]
 del company_survey_json_data["version"]
 
+number_of_default_questions = len(company_survey_json_data["form"][0][
+                                  "children"])
+print("Added {0} default questions".format(number_of_default_questions))
+
 # http://stackoverflow.com/a/24898931
 if "form" in overlay_survey_json_data:
     for i in overlay_survey_json_data["form"]:
@@ -139,6 +142,8 @@ if "form" in overlay_survey_json_data:
                 elif "AFTER_ID" in j:
                     insert_question_after(j["AFTER_ID"], j)
 
+number_of_questions = len(company_survey_json_data["form"][0]["children"])
+print("Total {0} questions".format(number_of_questions))
 paginate()
 
 company_frame_json_data = read_json_file("./master_frame.json")
