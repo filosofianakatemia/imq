@@ -8,10 +8,11 @@ import requests
 new_survey_path = sys.argv[1]
 
 with open(new_survey_path) as survey_json_file:
+    survey_json_data = json.load(survey_json_file)
     # Serializing is needed.
-    survey_json_data_serialized = json.dumps(json.load(survey_json_file))
+    survey_json_data_serialized = json.dumps(survey_json_data)
 
-email = "imq@filosofianakatemia.fi"
+email = input('Email: ')
 password = getpass.getpass()
 headers = {"Content-Type": "application/json"}
 # NOTE: v3 does not work for some reason
@@ -24,7 +25,11 @@ new_survey_response = requests.post(url, auth=(email, password),
 if (new_survey_response.status_code == 200 or     # api v2
         new_survey_response.status_code == 201):  # api v3
     # http://docs.python-requests.org/en/latest/user/quickstart/#more-complicated-post-requests
-    new_survey_response_json_data = json.loads(new_survey_response.text)
     print("Survey created!")
+    new_survey_response_json = new_survey_response.json()
+    # Update id into survey.
+    survey_json_data["id"] = new_survey_response_json["id"]
+    with open(new_survey_path, "w") as outfile:
+        json.dump(survey_json_data, outfile, indent=2, ensure_ascii=False)
 else:
     print("Request failed")
