@@ -4,7 +4,7 @@ import getpass
 import json
 import requests
 
-email = "imq@filosofianakatemia.fi"
+email = input('Email: ')
 password = getpass.getpass()
 headers = {"Accept": "application/json"}
 
@@ -33,10 +33,10 @@ def handle_list_surveys_response(surveys_response):
         surveys = json.loads(surveys_response.text)["results"]
         global surveys_string  # http://stackoverflow.com/a/10588342
         for survey in surveys:
-            surveys_string += "\tSurvey %s (id: %s)\n" % (survey["name"],
-                                                          survey["id"])
+            surveys_string += "\tSurvey {0} (id: {0})\n".format(survey["name"],
+                                                                survey["id"])
     else:
-        print("Request failed %s" % surveys_response.status_code)
+        print("Request failed {0}".format(surveys_response.status_code))
     return surveys_string
 
 

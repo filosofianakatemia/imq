@@ -1,20 +1,18 @@
-# https://gist.github.com/rmoff/9474035#file-fs_example-py-L35-L46
-
 import getpass
 import sys
 import requests
 
-email = "imq@filosofianakatemia.fi"
-pw = getpass.getpass()
+email = input('Email: ')
+password = getpass.getpass()
 # http://www.tutorialspoint.com/python/python_command_line_arguments.htm
 survey_id = str(sys.argv[1])
-url = "https://fluidsurveys.com/api/v3/surveys/%s/" % survey_id
+url = "https://fluidsurveys.com/api/v3/surveys/{0}/".format(survey_id)
 
 # TODO: Get status and delete only when not live.
 
-new_surveyr = requests.delete(url, auth=(email, pw))
+delete_survey_response = requests.delete(url, auth=(email, password))
 
-if (new_surveyr.status_code == 200):
+if (delete_survey_response.status_code == 200):
     print("Survey is now deleted")
 else:
     print("Request failed")
