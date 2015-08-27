@@ -33,7 +33,7 @@ def handle_list_surveys_response(surveys_response):
         surveys = json.loads(surveys_response.text)["results"]
         global surveys_string  # http://stackoverflow.com/a/10588342
         for survey in surveys:
-            surveys_string += "\tSurvey {0} (id: {0})\n".format(survey["name"],
+            surveys_string += "\tSurvey {0} (id: {1})\n".format(survey["name"],
                                                                 survey["id"])
     else:
         print("Request failed {0}".format(surveys_response.status_code))
