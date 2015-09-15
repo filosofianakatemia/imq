@@ -39,9 +39,20 @@
 .fs-chrome > .content .survey .question-body .label {
   color: #636363;
 }
+.fs-chrome > .content .survey .checkbox-title .question-body label {
+  color: #027180;
+  font-size: 120%;
+}
 
 .fs-chrome > .content .survey-footer {
-  display: none;
+  display: none !important
+}
+
+/*
+* Hide thank you icon.
+*/
+.fs-chrome > .content .survey .survey-icon {
+  display: none !important;
 }
 
 /*
