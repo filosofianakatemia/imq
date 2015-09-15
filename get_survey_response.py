@@ -1,8 +1,10 @@
+import csv
 import getpass
 import json
 import sys
 import re
 import requests
+import time
 # import get_survey
 
 response_id = sys.argv[1]
@@ -13,13 +15,14 @@ def read_json_file(json_file_path):
         # TODO: check that file has content.
         return json.load(json_file)
 
-email = input('Email: ')
+email = input("Email: ")
 password = getpass.getpass()
 headers = {"Accept": "application/json"}
 
 # http://stackoverflow.com/a/53180
-get_response_url = ("https://fluidsurveys.com/api/v3/surveys/{0}/responses/".
-                    format(response_id))
+get_response_url = (("https://fluidsurveys.com/api/v3/surveys/{0}/csv/"
+                     "?comma_separated=true&include_id=true&show_titles=false")
+                    .format(response_id))
 
 get_survey_response = requests.get(get_response_url,
                                    auth=(email, password), headers=headers)
@@ -46,45 +49,104 @@ else:
 # http://stackoverflow.com/a/18516125
 def valid_uuid(uuid):
     regex = re.compile(
-        '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z',
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z",
         re.I)
     match = regex.match(uuid)
     return bool(match)
 
 
-def is_survey_question_filter(response):
-    filtered_response = {}
-    for key in response:
-        key_to_compare = key
-        if "avoin" in key_to_compare:
-            pass
-        elif key_to_compare.startswith("tt"):
-            # id starting with tt is not a question
-            pass
-        else:
-            if key_to_compare.endswith("_0"):
-                # FluidSurveys adds a suffix to the ids. Remove it!
-                key_to_compare = key_to_compare[:-2]
-            for entry in survey_json_data["form"]:
-                if "children" in entry:
-                    for child_entry in entry["children"]:
-                        if (child_entry["id"] == key_to_compare
-                                and not valid_uuid(key_to_compare)):
-                            # Is a question. UUIDs are used for other purposes.
-                            filtered_response[key_to_compare] = response[key]
+def columns_to_filter(row):
+    filtered_columns = []
+    for j, entry in enumerate(row):
+        if ("completed" not in row[j] and
+                is_survey_question(row[j]) is False):
+            filtered_columns.append(j)
 
-    return filtered_response
+    return filtered_columns
+
+
+def is_completed(response):
+    for entry in response:
+        if "Incomplete" in response:
+            return False
+
+    return True
+
+
+def is_survey_question(response_variable):
+    key_to_compare = response_variable
+
+    if key_to_compare.startswith("{"):
+        key_to_compare = key_to_compare[1:]
+    if key_to_compare.endswith("}"):
+        key_to_compare = key_to_compare[:-1]
+
+    if key_to_compare == "avoin":
+        pass
+    elif key_to_compare.startswith("tt"):
+        # id starting with tt is not a question
+        pass
+    else:
+        if key_to_compare.endswith("_0"):
+            # FluidSurveys adds a suffix to the ids. Remove it!
+            key_to_compare = key_to_compare[:-2]
+
+        for entry in survey_json_data["form"]:
+            if "children" in entry:
+                for child_entry in entry["children"]:
+                    if (key_to_compare in child_entry["id"]
+                            and not valid_uuid(key_to_compare)):
+                        # Is a question. UUIDs are used for other purposes.
+                        return True
+
+    return False
+
 
 if get_survey_response.status_code == 200:
-    results = []
-    response_json_data = get_survey_response.json()
-    # TODO: Save response to a file.
-    if "results" in response_json_data:
-        for entry in response_json_data["results"]:
-            if entry["_completed"] == 0:
-                # FIXME: filter uncompleted, not completed
-                results.append(is_survey_question_filter(entry))
+    # http://stackoverflow.com/a/26209120
+    get_survey_response.encoding = "utf8"
+    reader = csv.reader(get_survey_response.text.splitlines(), quotechar="'")
+    timestamp = time.strftime('%Y-%m-%d')
 
-    print(json.dumps(results, indent=4, sort_keys=True))
-else:
-    print("Request failed")
+    # TODO: Add company name.
+    full_responses = "full_responses-{0}.csv".format(timestamp)
+    spss_responses = "spss_responses-{0}.csv".format(timestamp)
+
+    # UTF-8 http://stackoverflow.com/a/5181085
+    with open(full_responses, "w", newline="",
+              encoding="utf8") as full_responses:
+        # http://importpython.blogspot.fi/2009/12/how-to-get-todays-date-in-yyyymmdd.html
+        full_responses_writer = csv.writer(full_responses, delimiter=",")
+        with open(spss_responses, "w", newline="",
+                  encoding="utf8") as spss_responses:
+            spss_responses_writer = csv.writer(spss_responses, delimiter=",")
+            for (i, row) in enumerate(reader):
+                # Save response to a file.
+                full_responses_writer.writerow(row)
+                row_filtered_columns = []
+
+                if i == 0:
+                    key_to_compare_row = row
+                    filtered_columns = columns_to_filter(row)
+                    for (j, column) in enumerate(row):
+                        if (j not in filtered_columns and
+                                "completed" not in column):
+
+                            key = column
+
+                            if key.startswith("{"):
+                                key = key[1:]
+                            if key.endswith("}"):
+                                key = key[:-1]
+                            if key.endswith("_0"):
+                                key = key[:-2]
+                            row_filtered_columns.append(key)
+
+                else:
+                    if is_completed(row):
+                        for (j, column) in enumerate(row):
+                            if (j not in filtered_columns and
+                                    "complete" not in column.lower()):
+                                row_filtered_columns.append(column)
+
+                spss_responses_writer.writerow(row_filtered_columns)
