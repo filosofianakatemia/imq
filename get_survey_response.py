@@ -15,7 +15,7 @@ def read_json_file(json_file_path):
         # TODO: check that file has content.
         return json.load(json_file)
 
-email = input("Email: ")
+email = input('Email: ')
 password = getpass.getpass()
 headers = {"Accept": "application/json"}
 
@@ -102,6 +102,45 @@ def is_survey_question(response_variable):
     return False
 
 
+def is_reverse_question(question_id):
+    for entry in survey_json_data["form"]:
+        if "children" in entry:
+            for child_entry in entry["children"]:
+                if (question_id == child_entry["id"] and
+                    "REVERSE_VALUE" in child_entry):
+                    return True
+    return False
+
+
+def is_reverse_value(value_index, reverse_questions):
+    for question in reverse_questions:
+        if question["index"] == value_index:
+            return True
+    return False
+
+
+def flip_value(value):
+    if not value:
+        # http://stackoverflow.com/a/9573283
+        # There <i>should</i> be value since incompleted responses are removed.
+        pass
+    else:
+        value = int(value)
+        if value == 1:
+            value = 7
+        elif value == 2:
+            value = 6
+        elif value == 3:
+            value = 5
+        elif value == 5:
+            value = 3
+        elif value == 6:
+            value = 2
+        elif value == 7:
+            value = 1
+    return value
+
+
 if get_survey_response.status_code == 200:
     # http://stackoverflow.com/a/26209120
     get_survey_response.encoding = "utf8"
@@ -120,6 +159,7 @@ if get_survey_response.status_code == 200:
         with open(spss_responses, "w", newline="",
                   encoding="utf8") as spss_responses:
             spss_responses_writer = csv.writer(spss_responses, delimiter=",")
+            reverse_questions = []
             for (i, row) in enumerate(reader):
                 # Save response to a file.
                 full_responses_writer.writerow(row)
@@ -140,6 +180,10 @@ if get_survey_response.status_code == 200:
                                 key = key[:-1]
                             if key.endswith("_0"):
                                 key = key[:-2]
+
+                            if is_reverse_question(key):
+                                reverse_questions.append({"question_id": key,
+                                                         "index": j})
                             row_filtered_columns.append(key)
 
                 else:
@@ -147,6 +191,8 @@ if get_survey_response.status_code == 200:
                         for (j, column) in enumerate(row):
                             if (j not in filtered_columns and
                                     "complete" not in column.lower()):
+                                if is_reverse_value(j, reverse_questions):
+                                    column = flip_value(column);
                                 row_filtered_columns.append(column)
 
                 spss_responses_writer.writerow(row_filtered_columns)
