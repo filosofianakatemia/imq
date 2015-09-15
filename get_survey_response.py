@@ -5,7 +5,6 @@ import sys
 import re
 import requests
 import time
-# import get_survey
 
 response_id = sys.argv[1]
 
@@ -68,7 +67,7 @@ def columns_to_filter(row):
 def is_completed(response):
     for entry in response:
         if "Incomplete" in response:
-            return False
+            return False     # DEBUG, TODO, FIXME
 
     return True
 
@@ -82,9 +81,6 @@ def is_survey_question(response_variable):
         key_to_compare = key_to_compare[:-1]
 
     if key_to_compare == "avoin":
-        pass
-    elif key_to_compare.startswith("tt"):
-        # id starting with tt is not a question
         pass
     else:
         if key_to_compare.endswith("_0"):
@@ -107,7 +103,7 @@ def is_reverse_question(question_id):
         if "children" in entry:
             for child_entry in entry["children"]:
                 if (question_id == child_entry["id"] and
-                    "REVERSE_VALUE" in child_entry):
+                        "REVERSE_VALUE" in child_entry):
                     return True
     return False
 
@@ -141,10 +137,20 @@ def flip_value(value):
     return value
 
 
+def is_float(value):
+    # http://stackoverflow.com/a/20929983
+    try:
+        float(value)
+        return True
+    except:
+        return False
+
+
 if get_survey_response.status_code == 200:
     # http://stackoverflow.com/a/26209120
     get_survey_response.encoding = "utf8"
-    reader = csv.reader(get_survey_response.text.splitlines(), quotechar="'")
+    # http://stackoverflow.com/a/16268214
+    reader = csv.reader(get_survey_response.text.split("\n"))
     timestamp = time.strftime('%Y-%m-%d')
 
     # TODO: Add company name.
@@ -155,10 +161,12 @@ if get_survey_response.status_code == 200:
     with open(full_responses, "w", newline="",
               encoding="utf8") as full_responses:
         # http://importpython.blogspot.fi/2009/12/how-to-get-todays-date-in-yyyymmdd.html
-        full_responses_writer = csv.writer(full_responses, delimiter=",")
+        full_responses_writer = csv.writer(full_responses, quotechar="'",
+                                           quoting=csv.QUOTE_NONNUMERIC)
         with open(spss_responses, "w", newline="",
                   encoding="utf8") as spss_responses:
-            spss_responses_writer = csv.writer(spss_responses, delimiter=",")
+            spss_responses_writer = csv.writer(spss_responses, quotechar="'",
+                                               quoting=csv.QUOTE_NONNUMERIC)
             reverse_questions = []
             for (i, row) in enumerate(reader):
                 # Save response to a file.
@@ -183,7 +191,7 @@ if get_survey_response.status_code == 200:
 
                             if is_reverse_question(key):
                                 reverse_questions.append({"question_id": key,
-                                                         "index": j})
+                                                          "index": j})
                             row_filtered_columns.append(key)
 
                 else:
@@ -192,7 +200,8 @@ if get_survey_response.status_code == 200:
                             if (j not in filtered_columns and
                                     "complete" not in column.lower()):
                                 if is_reverse_value(j, reverse_questions):
-                                    column = flip_value(column);
+                                    column = flip_value(column)
+                                if is_float(column):
+                                    column = int(column)
                                 row_filtered_columns.append(column)
-
                 spss_responses_writer.writerow(row_filtered_columns)
