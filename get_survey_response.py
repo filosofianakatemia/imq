@@ -67,7 +67,7 @@ def columns_to_filter(row):
 def is_completed(response):
     for entry in response:
         if "Incomplete" in response:
-            return False     # DEBUG, TODO, FIXME
+            return False
 
     return True
 
@@ -146,6 +146,32 @@ def is_float(value):
         return False
 
 
+def generate_prepare_data_spss_syntax(question_ids):
+    measurement_level = set_question_measurement_level_to_scale(question_ids)
+    dataset_name = rename_dataset()
+
+    with open("prepare_data.sps", "wt") as out_file:
+        out_file.write(measurement_level + dataset_name)
+
+
+def set_question_measurement_level_to_scale(question_ids):
+    measurement_level = "VARIABLE LEVEL\n"
+
+    for question_id in question_ids:
+        if not question_id.startswith("tt"):
+            # NOTE: Background question IDs starts with "tt"
+            # It could be better to check IDs against survey.json
+            measurement_level += ("{}(SCALE)\n".format(question_id))
+    measurement_level += ".\n"
+
+    return measurement_level
+
+
+def rename_dataset():
+    # NOTE: Dataset name can't contain dash, use undescore.
+    return "DATASET NAME {0}_{1}.".format("dataset", time.strftime('%Y%m%d'))
+
+
 if get_survey_response.status_code == 200:
     # http://stackoverflow.com/a/26209120
     get_survey_response.encoding = "utf8"
@@ -156,6 +182,7 @@ if get_survey_response.status_code == 200:
     # TODO: Add company name.
     full_responses = "full_responses-{0}.csv".format(timestamp)
     spss_responses = "spss_responses-{0}.csv".format(timestamp)
+    spss_question_ids = []
 
     # UTF-8 http://stackoverflow.com/a/5181085
     with open(full_responses, "w", newline="",
@@ -169,7 +196,7 @@ if get_survey_response.status_code == 200:
                                                quoting=csv.QUOTE_NONNUMERIC)
             reverse_questions = []
             for (i, row) in enumerate(reader):
-                # Save response to a file.
+                # Save raw response row to a file.
                 full_responses_writer.writerow(row)
                 row_filtered_columns = []
 
@@ -193,6 +220,7 @@ if get_survey_response.status_code == 200:
                                 reverse_questions.append({"question_id": key,
                                                           "index": j})
                             row_filtered_columns.append(key)
+                            spss_question_ids.append(key)
 
                 else:
                     if is_completed(row):
@@ -205,3 +233,5 @@ if get_survey_response.status_code == 200:
                                     column = int(column)
                                 row_filtered_columns.append(column)
                 spss_responses_writer.writerow(row_filtered_columns)
+
+    generate_prepare_data_spss_syntax(spss_question_ids)
