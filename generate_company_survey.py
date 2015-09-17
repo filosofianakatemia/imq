@@ -132,6 +132,15 @@ def get_company_and_survey_name():
         survey_name = sys.argv[2]
 
 
+def get_overlay_survey(company_name, survey_name):
+    overlay_survey_json_file_path = "./{0}/{1}/overlay.json".format(
+        company_name, survey_name)
+    if os.path.isfile(overlay_survey_json_file_path):
+        overlay_survey_json_data = (read_json_file(
+                                    overlay_survey_json_file_path))
+        return overlay_survey_json_data
+
+
 def query_credentials():
     if len(sys.argv) < 4:
         email = input('Sähköposti: ')
@@ -154,15 +163,6 @@ def is_existing_survey(company_name, survey_name, surveys):
         if survey["name"] == survey_name:
             return True
     return False
-
-
-def get_overlay_survey(company_name, survey_name):
-    overlay_survey_json_file_path = "./{0}/{1}/overlay.json".format(
-        company_name, survey_name)
-    if os.path.isfile(overlay_survey_json_file_path):
-        overlay_survey_json_data = (read_json_file(
-                                    overlay_survey_json_file_path))
-        return overlay_survey_json_data
 
 
 def query_create_new_survey():
@@ -201,6 +201,7 @@ def rename_survey(survey_id, name, credentials):
                                                  survey_name), "w") as outfile:
             json.dump(company_survey_json_data, outfile, indent=2,
                       ensure_ascii=False)
+    # TODO: Add error handling.
 
 
 print("Tervetuloa luomaan IMQ-kyselyä!")
