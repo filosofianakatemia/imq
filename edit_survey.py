@@ -15,9 +15,8 @@ with open(survey_path) as survey_json_file:
     survey_json_data_serialized = json.dumps(json.load(survey_json_file))
     print(survey_json_data_serialized)
 
-email = "imq@filosofianakatemia.fi"
+email = input('Email: ')
 password = getpass.getpass()
-# headers = {'Accept': 'application/json'}
 headers = {"Content-Type": "application/json"}
 edit_survey_url = "https://fluidsurveys.com/api/v3/surveys/%s/" % survey_id
 
