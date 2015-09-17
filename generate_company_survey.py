@@ -1,8 +1,11 @@
 import copy
+import getpass
 import json
 import os.path
+import requests
 import sys
 import uuid
+import list_surveys
 
 question_page = {
     "children": [],
@@ -36,7 +39,7 @@ def remove_question(id):
             # http://stackoverflow.com/a/9755790
             for child_entry in entry["children"]:
                 if child_entry["id"] == id:
-                    print("delete\t{0}\t\"{1}\"\n".
+                    print("poista\t{0}\t\"{1}\"\n".
                           format(child_entry["id"],
                                  child_entry["title"]))
                     entry["children"].remove(child_entry)
@@ -48,9 +51,9 @@ def insert_question_after(id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == id:
-                    print("insert\t{0}\t\"{1}\"\n"
-                          "after\t{2}\t\"{3}\"\n"
-                          "index\t{4}\n".
+                    print("lisää\t{0}\t\"{1}\"\n"
+                          "jälkeen\t{2}\t\"{3}\"\n"
+                          "indeksi\t{4}\n".
                           format(question["id"], question["title"],
                                  child_entry["id"], child_entry["title"],
                                  index + 1))
@@ -63,9 +66,9 @@ def insert_question_before(id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == id:
-                    print("insert\t{0}\t\"{1}\"\n"
-                          "before\t{2}\t\"{3}\"\n"
-                          "index\t{4}\n".
+                    print("lisää\t{0}\t\"{1}\"\n"
+                          "ennen\t{2}\t\"{3}\"\n"
+                          "indeksi\t{4}\n".
                           format(question["id"], question["title"],
                                  child_entry["id"], child_entry["title"],
                                  index))
@@ -78,9 +81,9 @@ def insert_frame_question_after(id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == id:
-                    print("insert\t{0}\t\"{1}\"\n"
-                          "after\t{2}\t\"{3}\"\n"
-                          "index\t{4}\n".
+                    print("lisää\t{0}\t\"{1}\"\n"
+                          "jälkeen\t{2}\t\"{3}\"\n"
+                          "indeksi\t{4}\n".
                           format(question["id"], question["title"],
                                  child_entry["id"], child_entry["title"],
                                  index + 1))
@@ -106,28 +109,135 @@ def paginate():
             company_survey_json_data["form"][
                 index + 1]["children"].extend(sliced_questions)
 
-master_survey_json_flattened_file_path = "./master_latest_flattened.json"
 
-company_name = sys.argv[1]
-overlay_survey_json_file_path = "./{0}/overlay.json".format(company_name)
+def get_company_and_survey_name():
+    global company_name
+    global survey_name
+
+    # http://stackoverflow.com/a/18413162
+    if len(sys.argv) < 2:
+        while True:
+            company_name = input('Yrityksen nimi: ')
+            survey_name = input('Kyselyn nimi: ')
+            if (company_name and survey_name and
+                    os.path.isdir("{0}/{1}".format(company_name,
+                                  survey_name))):
+                break
+            else:
+                print("Kyselyä antamillasi tiedoilla ei löydy. Tarkista "
+                      "yrityksen ja kyselyn nimi ja että olet luonut "
+                      "hakemistot.")
+    else:
+        company_name = sys.argv[1]
+        survey_name = sys.argv[2]
+
+
+def query_credentials():
+    if len(sys.argv) < 4:
+        email = input('Sähköposti: ')
+        password = getpass.getpass()
+    else:
+        email = sys.argv[3]
+        password = sys.argv[4]
+
+    return {"email": email, "password": password}
+
+
+def get_existing_surveys(credentials):
+    return list_surveys.get_surveys(email=credentials["email"],
+                                    password=credentials["password"])
+
+
+def is_existing_survey(company_name, survey_name, surveys):
+    survey_name = "{0}-{1}".format(company_name, survey_name)
+    for survey in surveys:
+        if survey["name"] == survey_name:
+            return True
+    return False
+
+
+def get_overlay_survey(company_name, survey_name):
+    overlay_survey_json_file_path = "./{0}/{1}/overlay.json".format(
+        company_name, survey_name)
+    if os.path.isfile(overlay_survey_json_file_path):
+        overlay_survey_json_data = (read_json_file(
+                                    overlay_survey_json_file_path))
+        return overlay_survey_json_data
+
+
+def query_create_new_survey():
+    return input("Lisää kysely FluidSurveysiin painamalla "
+                 "\"k\": ").lower() == 'k'
+
+
+def create_new_survey(credentials):
+    import create_new_survey
+    return create_new_survey.create_survey(company_survey_json_data,
+                                           credentials=credentials)
+
+
+def update_survey_data_and_save(new_survey_json_data):
+    # Update id into survey.
+    company_survey_json_data["id"] = new_survey_json_data["id"]
+    with open("./{0}/{1}/survey.json".format(company_name,
+                                             survey_name), "w") as outfile:
+        json.dump(company_survey_json_data, outfile, indent=2,
+                  ensure_ascii=False)
+
+
+def rename_survey(survey_id, name, credentials):
+    headers = {"Content-Type": "application/json"}
+    url = "https://fluidsurveys.com/api/v3/surveys/{}/".format(
+        survey_id)
+    data = json.dumps({"name": name})
+
+    # TODO: use edit_survey
+    ren = requests.put(url,
+                       auth=(credentials["email"], credentials["password"]),
+                       headers=headers, data=data)
+    if ren.status_code == 200:
+        company_survey_json_data["name"] = ren.json()["name"]
+        with open("./{0}/{1}/survey.json".format(company_name,
+                                                 survey_name), "w") as outfile:
+            json.dump(company_survey_json_data, outfile, indent=2,
+                      ensure_ascii=False)
+
+
+print("Tervetuloa luomaan IMQ-kyselyä!")
+company_name = None
+survey_name = None
+get_company_and_survey_name()
+overlay_survey_json_data = get_overlay_survey(company_name, survey_name)
+if not overlay_survey_json_data:
+    print("Sinun täytyy luoda kyselykohtainen overlay.json-tiedosto.")
+    exit()
+print("Haetaan olemassa olevat kyselyt.")
+credentials = query_credentials()
+surveys = get_existing_surveys(credentials)
+if is_existing_survey(company_name, survey_name, surveys):
+    print("Kysely on jo olemassa. Poista vanha kysely FluidSurveysista")
+    # TODO: Add possibility to delete existing survey.
+    exit()
+else:
+    print("Kyselyä ei löytynyt. Luodaan uusi kysely.")
+
+
+master_survey_json_flattened_file_path = "./master_latest_flattened.json"
 
 # Get flattened questions.
 company_survey_json_data = read_json_file(
     master_survey_json_flattened_file_path)
 
-overlay_survey_json_data = read_json_file(overlay_survey_json_file_path)
 
 # Update main attributes.
-company_survey_json_data["title"] = overlay_survey_json_data["title"]
-# NOTE: Replace title attribute with name attribute
-# if using FluidSurveys API v3.
-# company_survey_json_data["name"] = overlay_survey_json_data["name"]
+company_survey_json_data["name"] = overlay_survey_json_data["name"]
+company_survey_json_data["title"] = overlay_survey_json_data["name"]
 company_survey_json_data["IMQ_VERSION"] = company_survey_json_data["version"]
 del company_survey_json_data["version"]
 
 number_of_default_questions = len(company_survey_json_data["form"][0][
                                   "children"])
-print("Added {0} default questions".format(number_of_default_questions))
+print("\nLisättiin {0} peruskysymystä".format(number_of_default_questions))
 
 # http://stackoverflow.com/a/24898931
 if "form" in overlay_survey_json_data:
@@ -137,13 +247,13 @@ if "form" in overlay_survey_json_data:
                 if "DELETE_ID" in j:
                     remove_question(j["DELETE_ID"])
                 elif "BEFORE_ID" in j:
-                    print("insert")
                     insert_question_before(j["BEFORE_ID"], j)
                 elif "AFTER_ID" in j:
                     insert_question_after(j["AFTER_ID"], j)
 
 number_of_questions = len(company_survey_json_data["form"][0]["children"])
-print("Total {0} questions".format(number_of_questions))
+print("Kysymysten lisääminen on valmis. Kysely sisältää {0} kysymystä.\n"
+      .format(number_of_questions))
 paginate()
 
 company_frame_json_data = read_json_file("./master_frame.json")
@@ -173,5 +283,21 @@ company_survey_json_data["form"] = company_frame_json_data[
 # Uncomment for debugging.
 # print(json.dumps(company_frame_json_data, indent=4, ensure_ascii=False))
 
-with open("./{0}/survey.json".format(company_name), "w") as outfile:
+with open("./{0}/{1}/survey.json".format(company_name,
+                                         survey_name), "w") as outfile:
     json.dump(company_survey_json_data, outfile, indent=2, ensure_ascii=False)
+
+if query_create_new_survey():
+    print("Lisätään kysely")
+    new_survey_json_data = create_new_survey(credentials)
+    if not new_survey_json_data:
+        print("Jotain tapahtui")
+    else:
+        update_survey_data_and_save(new_survey_json_data)
+        print("Päivitetään kyselyn nimi.")
+        rename_survey(company_survey_json_data["id"],
+                      "{0}-{1}".format(company_name, survey_name),
+                      credentials)
+        print("Kysely on nyt luotu.")
+else:
+    print("Loppu")
