@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd ~/Documents/IMQ/
-python3 ~/devel/imq/generate_company_survey.py $@
+cd ~/Dropbox/Filosofian\ Akatemia\ -\ IMQ
+python3 skriptit/generate_company_survey.py $@
