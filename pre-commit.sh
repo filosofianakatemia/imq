@@ -1,3 +1,3 @@
 #!/bin/sh
 
-rsync -ad ~/devel/imq/ ~/Dropbox/Filosofian\ Akatemia\ -\ IMQ/skriptit
+rsync -a --delete ~/devel/imq/ ~/Dropbox/Filosofian\ Akatemia\ -\ IMQ/skriptit
