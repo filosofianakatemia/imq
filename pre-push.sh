@@ -1,3 +1,3 @@
 #!/bin/sh
 
-rsync -a --delete ~/devel/imq/ ~/Dropbox/Filosofian\ Akatemia\ -\ IMQ/skriptit
+rsync -a --delete --exclude 'pre-push.sh' ~/devel/imq/ ~/Dropbox/Filosofian\ Akatemia\ -\ IMQ/skriptit
