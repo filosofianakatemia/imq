@@ -23,7 +23,7 @@ single_choise_grid_description = {
     },
     "idname": "section-separator",
     "title": {
-        "fi": "Arvioi seuraavien väittämien paikkaansapitävyyttä työssäsi"
+        "fi": "Arvioi seuraavien väittämien paikkansapitävyyttä työssäsi"
     },
     "type": "question"
 }
@@ -94,7 +94,21 @@ def insert_frame_question_after(id, question):
                     break
 
 
-def paginate():
+def merge_overlay_questions():
+    # http://stackoverflow.com/a/24898931
+    if "form" in overlay_survey_json_data:
+        for i in overlay_survey_json_data["form"]:
+            if "children" in i:
+                for j in i["children"]:
+                    if "DELETE_ID" in j:
+                        remove_question(j["DELETE_ID"])
+                    elif "BEFORE_ID" in j:
+                        insert_question_before(j["BEFORE_ID"], j)
+                    elif "AFTER_ID" in j:
+                        insert_question_after(j["AFTER_ID"], j)
+
+
+def paginate_survey():
     QUESTIONS_IN_PAGE = 10
     for index, entry in enumerate(company_survey_json_data["form"]):
 
@@ -120,8 +134,8 @@ def get_company_and_survey_name():
     # http://stackoverflow.com/a/18413162
     if len(sys.argv) < 2:
         while True:
-            company_name = input('Yrityksen nimi: ')
-            survey_name = input('Kyselyn nimi: ')
+            company_name = input("Yrityksen nimi: ")
+            survey_name = input("Kyselyn nimi: ")
             if (company_name and survey_name and
                     os.path.isdir("{0}/{1}/{2}".format(SURVEY_DATA_BASE_PATH,
                                                        company_name,
@@ -147,7 +161,7 @@ def get_overlay_survey(company_name, survey_name):
 
 def query_credentials():
     if len(sys.argv) < 4:
-        email = input('Sähköposti: ')
+        email = input("Sähköposti: ")
         password = getpass.getpass()
     else:
         email = sys.argv[3]
@@ -169,9 +183,57 @@ def is_existing_survey(company_name, survey_name, surveys):
     return False
 
 
+# http://stackoverflow.com/a/973488
+def get_latest_questions_version():
+    return max(next(os.walk("./{}".format(QUESTIONS_BASE_PATH)))[1])
+
+
+def get_flattened_questions():
+    master_survey_json_flattened_file_path = (
+        "./{0}/{1}/master_flattened_{1}.json".format(QUESTIONS_BASE_PATH,
+                                                     questions_version))
+
+    return read_json_file(master_survey_json_flattened_file_path)
+
+
+def get_survey_frame():
+    return read_json_file(".{0}/{1}/master_frame_{1}.json".format(
+                                         QUESTIONS_BASE_PATH,
+                                         questions_version))
+
+
+def get_overlay_frame_and_merge_with_master():
+    overlay_frame_json_file_path = ("./{0}/{1}/{2}/overlay_frame.json".format(
+                                SURVEY_DATA_BASE_PATH,
+                                company_name,
+                                survey_name))
+    if os.path.isfile(overlay_frame_json_file_path):
+        # Merge overlay frame with master.
+        overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
+
+        for entry in overlay_frame_json_data:
+            if "children" in entry:
+                for child_entry in entry["children"]:
+                    if "DELETE_ID" in child_entry:
+                        print("delete")
+                    elif "BEFORE_ID" in child_entry:
+                        print("before")
+                    elif "AFTER_ID" in child_entry:
+                        insert_frame_question_after(child_entry["AFTER_ID"],
+                                                    child_entry)
+
+
+def add_survey_frame():
+    # Add survey frame. Last two questions goes to the end of the survey.
+    PREPENDING_QUESTIONS_IN_FRAME = len(company_frame_json_data) - 2
+    company_survey_json_data["form"] = company_frame_json_data[
+        :PREPENDING_QUESTIONS_IN_FRAME] + company_survey_json_data[
+        "form"] + company_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
+
+
 def query_create_new_survey():
     return input("Lisää kysely FluidSurveysiin painamalla "
-                 "\"k\": ").lower() == 'k'
+                 "\"k\": ").lower() == "k"
 
 
 def create_new_survey(credentials):
@@ -228,15 +290,8 @@ if is_existing_survey(company_name, survey_name, surveys):
     exit()
 else:
     print("Kyselyä ei löytynyt. Luodaan uusi kysely.")
-
-
-master_survey_json_flattened_file_path = (
-    "./{}/master_latest_flattened.json".format(QUESTIONS_BASE_PATH))
-
-# Get flattened questions.
-company_survey_json_data = read_json_file(
-    master_survey_json_flattened_file_path)
-
+questions_version = get_latest_questions_version()
+company_survey_json_data = get_flattened_questions()
 
 # Update main attributes.
 company_survey_json_data["name"] = overlay_survey_json_data["name"]
@@ -248,50 +303,16 @@ number_of_default_questions = len(company_survey_json_data["form"][0][
                                   "children"])
 print("\nLisättiin {0} peruskysymystä".format(number_of_default_questions))
 
-# http://stackoverflow.com/a/24898931
-if "form" in overlay_survey_json_data:
-    for i in overlay_survey_json_data["form"]:
-        if "children" in i:
-            for j in i["children"]:
-                if "DELETE_ID" in j:
-                    remove_question(j["DELETE_ID"])
-                elif "BEFORE_ID" in j:
-                    insert_question_before(j["BEFORE_ID"], j)
-                elif "AFTER_ID" in j:
-                    insert_question_after(j["AFTER_ID"], j)
+merge_overlay_questions()
 
 number_of_questions = len(company_survey_json_data["form"][0]["children"])
 print("Kysymysten lisääminen on valmis. Kysely sisältää {0} kysymystä.\n"
       .format(number_of_questions))
-paginate()
 
-company_frame_json_data = read_json_file(".{}/master_frame.json".format(
-                                         QUESTIONS_BASE_PATH))
-
-overlay_frame_json_file_path = ("./{0}/{1}/{2}/overlay_frame.json".format(
-                                SURVEY_DATA_BASE_PATH,
-                                company_name,
-                                survey_name))
-if os.path.isfile(overlay_frame_json_file_path):
-    # Merge overlay frame with master.
-    overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
-
-    for entry in overlay_frame_json_data:
-        if "children" in entry:
-            for child_entry in entry["children"]:
-                if "DELETE_ID" in child_entry:
-                    print("delete")
-                elif "BEFORE_ID" in child_entry:
-                    print("before")
-                elif "AFTER_ID" in child_entry:
-                    insert_frame_question_after(child_entry["AFTER_ID"],
-                                                child_entry)
-
-# Add survey frame. Last question goes to the end of the survey.
-PREPENDING_QUESTIONS_IN_FRAME = len(company_frame_json_data) - 1
-company_survey_json_data["form"] = company_frame_json_data[
-    :PREPENDING_QUESTIONS_IN_FRAME] + company_survey_json_data[
-    "form"] + company_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
+paginate_survey()
+company_frame_json_data = get_survey_frame()
+get_overlay_frame_and_merge_with_master()
+add_survey_frame()
 
 # Uncomment for debugging.
 # print(json.dumps(company_frame_json_data, indent=4, ensure_ascii=False))
