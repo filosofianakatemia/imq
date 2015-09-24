@@ -3,6 +3,8 @@ import json
 import math
 import uuid
 
+QUESTIONS_BASE_PATH = "kysymykset"
+
 question_page = {
     "children": [],
     "type": "page"
@@ -100,9 +102,11 @@ master_json_data_flattened = {
 }
 
 reverse_question_ids = [
-    line.rstrip('\n') for line in open("./reverse_question_ids_1.4.txt")]
+    line.rstrip('\n') for line in open("./{}/reverse_question_ids_1.4.txt"
+                                       .format(QUESTIONS_BASE_PATH))]
 
-with open("./questions_1.4.txt") as questions_file:
+with open("./{}/questions_1.4.txt"
+          .format(QUESTIONS_BASE_PATH)) as questions_file:
     for index, line in enumerate(questions_file):
         question_id = line[:12].strip()
         title = line[12:].strip()
@@ -141,16 +145,19 @@ with open("./questions_1.4.txt") as questions_file:
 #                  indent=4, sort_keys=True))
 
 # Add survey frame
-with open("./master_frame.json") as master_frame_json_file:
+with open("./{}/master_frame.json"
+          .format(QUESTIONS_BASE_PATH)) as master_frame_json_file:
     master_frame_json_data = json.load(master_frame_json_file)
     PREPENDING_QUESTIONS_IN_FRAME = len(master_frame_json_data) - 1
     master_json_data["form"] = master_frame_json_data[
         :PREPENDING_QUESTIONS_IN_FRAME] + master_json_data[
         "form"] + master_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
 
-with open("./master_latest.json", "w") as outfile:
+with open("./{}/master_latest.json"
+          .format(QUESTIONS_BASE_PATH), "w") as outfile:
     json.dump(master_json_data, outfile, indent=2, ensure_ascii=False)
 
-with open("./master_latest_flattened.json", "w") as outfile:
+with open("./{}/master_latest_flattened.json"
+          .format(QUESTIONS_BASE_PATH), "w") as outfile:
     json.dump(master_json_data_flattened, outfile, indent=2,
               ensure_ascii=False)

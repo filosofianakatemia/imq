@@ -6,7 +6,12 @@ import re
 import requests
 import time
 
+SURVEY_DATA_BASE_PATH = "data"
+QUESTIONS_BASE_PATH = "kysymykset"
+
 response_id = sys.argv[1]
+company_name = sys.argv[2]
+survey_name = sys.argv[3]
 
 
 def read_json_file(json_file_path):
@@ -27,12 +32,18 @@ get_survey_response = requests.get(get_response_url,
                                    auth=(email, password), headers=headers)
 
 # Get questions.
-survey_json_file_path = "./survey.json"
+survey_json_file_path = ("./{0}/{1}/{2}/survey.json"
+                         .format(SURVEY_DATA_BASE_PATH,
+                                 company_name,
+                                 survey_name))
 # Or call get_survey with response_id
 survey_json_data = read_json_file(survey_json_file_path)
 
 # Get flattened questions.
-master_survey_json_flattened_file_path = "../master_latest_flattened.json"
+# FIXME
+master_survey_json_flattened_file_path = ("./{}/master_latest_flattened.json"
+                                          .format(QUESTIONS_BASE_PATH))
+# FIXME
 flattened_master_survey_json_data = read_json_file(
     master_survey_json_flattened_file_path)
 
@@ -150,7 +161,10 @@ def generate_prepare_data_spss_syntax(question_ids):
     measurement_level = set_question_measurement_level_to_scale(question_ids)
     dataset_name = rename_dataset()
 
-    with open("prepare_data.sps", "wt") as out_file:
+    with open("./{0}/{1}/{2}/prepare_data.sps".format(SURVEY_DATA_BASE_PATH,
+                                                      company_name,
+                                                      survey_name),
+              "wt") as out_file:
         out_file.write(measurement_level + dataset_name)
 
 
@@ -180,8 +194,12 @@ if get_survey_response.status_code == 200:
     timestamp = time.strftime('%Y-%m-%d')
 
     # TODO: Add company name.
-    full_responses = "full_responses-{0}.csv".format(timestamp)
-    spss_responses = "spss_responses-{0}.csv".format(timestamp)
+    full_responses = ("./{0}/{1}/{2}/full_responses-{0}.csv"
+                      .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
+                              timestamp))
+    spss_responses = ("./{0}/{1}/{2}/spss_responses-{0}.csv"
+                      .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
+                              timestamp))
     spss_question_ids = []
 
     # UTF-8 http://stackoverflow.com/a/5181085

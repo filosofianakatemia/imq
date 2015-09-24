@@ -7,6 +7,9 @@ import sys
 import uuid
 import list_surveys
 
+SURVEY_DATA_BASE_PATH = "data"
+QUESTIONS_BASE_PATH = "kysymykset"
+
 question_page = {
     "children": [],
     "type": "page"
@@ -120,8 +123,9 @@ def get_company_and_survey_name():
             company_name = input('Yrityksen nimi: ')
             survey_name = input('Kyselyn nimi: ')
             if (company_name and survey_name and
-                    os.path.isdir("{0}/{1}".format(company_name,
-                                  survey_name))):
+                    os.path.isdir("{0}/{1}/{2}".format(SURVEY_DATA_BASE_PATH,
+                                                       company_name,
+                                                       survey_name))):
                 break
             else:
                 print("Kyselyä antamillasi tiedoilla ei löydy. Tarkista "
@@ -133,8 +137,8 @@ def get_company_and_survey_name():
 
 
 def get_overlay_survey(company_name, survey_name):
-    overlay_survey_json_file_path = "./{0}/{1}/overlay.json".format(
-        company_name, survey_name)
+    overlay_survey_json_file_path = "./{0}/{1}/{2}/overlay.json".format(
+        SURVEY_DATA_BASE_PATH, company_name, survey_name)
     if os.path.isfile(overlay_survey_json_file_path):
         overlay_survey_json_data = (read_json_file(
                                     overlay_survey_json_file_path))
@@ -179,8 +183,9 @@ def create_new_survey(credentials):
 def update_survey_data_and_save(new_survey_json_data):
     # Update id into survey.
     company_survey_json_data["id"] = new_survey_json_data["id"]
-    with open("./{0}/{1}/survey.json".format(company_name,
-                                             survey_name), "w") as outfile:
+    with open("./{0}/{1}/{2}/survey.json".format(SURVEY_DATA_BASE_PATH,
+                                                 company_name,
+                                                 survey_name), "w") as outfile:
         json.dump(company_survey_json_data, outfile, indent=2,
                   ensure_ascii=False)
 
@@ -197,8 +202,10 @@ def rename_survey(survey_id, name, credentials):
                        headers=headers, data=data)
     if ren.status_code == 200:
         company_survey_json_data["name"] = ren.json()["name"]
-        with open("./{0}/{1}/survey.json".format(company_name,
-                                                 survey_name), "w") as outfile:
+        with open("./{0}/{1}/{2}/survey.json".format(SURVEY_DATA_BASE_PATH,
+                                                     company_name,
+                                                     survey_name),
+                  "w") as outfile:
             json.dump(company_survey_json_data, outfile, indent=2,
                       ensure_ascii=False)
     # TODO: Add error handling.
@@ -223,7 +230,8 @@ else:
     print("Kyselyä ei löytynyt. Luodaan uusi kysely.")
 
 
-master_survey_json_flattened_file_path = "./master_latest_flattened.json"
+master_survey_json_flattened_file_path = (
+    "./{}/master_latest_flattened.json".format(QUESTIONS_BASE_PATH))
 
 # Get flattened questions.
 company_survey_json_data = read_json_file(
@@ -257,9 +265,13 @@ print("Kysymysten lisääminen on valmis. Kysely sisältää {0} kysymystä.\n"
       .format(number_of_questions))
 paginate()
 
-company_frame_json_data = read_json_file("./master_frame.json")
+company_frame_json_data = read_json_file(".{}/master_frame.json".format(
+                                         QUESTIONS_BASE_PATH))
 
-overlay_frame_json_file_path = "./{0}/overlay_frame.json".format(company_name)
+overlay_frame_json_file_path = ("./{0}/{1}/{2}/overlay_frame.json".format(
+                                SURVEY_DATA_BASE_PATH,
+                                company_name,
+                                survey_name))
 if os.path.isfile(overlay_frame_json_file_path):
     # Merge overlay frame with master.
     overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
@@ -284,8 +296,9 @@ company_survey_json_data["form"] = company_frame_json_data[
 # Uncomment for debugging.
 # print(json.dumps(company_frame_json_data, indent=4, ensure_ascii=False))
 
-with open("./{0}/{1}/survey.json".format(company_name,
-                                         survey_name), "w") as outfile:
+with open("./{0}/{1}/{2}/survey.json".format(SURVEY_DATA_BASE_PATH,
+                                             company_name,
+                                             survey_name), "w") as outfile:
     json.dump(company_survey_json_data, outfile, indent=2, ensure_ascii=False)
 
 if query_create_new_survey():
