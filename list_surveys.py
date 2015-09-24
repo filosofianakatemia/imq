@@ -16,10 +16,10 @@ def get_surveys_and_print():
 
 
 def get_surveys(*args, **kwargs):
-    email = kwargs.get('email', None)
-    password = kwargs.get('password', None)
+    email = kwargs.get("email", None)
+    password = kwargs.get("password", None)
     if not email:
-        email = input('Email: ')
+        email = input("Email: ")
     if not password:
         password = getpass.getpass()
     headers = {"Accept": "application/json"}
