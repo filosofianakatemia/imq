@@ -1,9 +1,15 @@
 import copy
 import json
 import math
+import sys
 import uuid
 
 QUESTIONS_BASE_PATH = "kysymykset"
+
+if len(sys.argv) < 2:
+    questions_version = input("Enter new version number: ")
+else:
+    questions_version = sys.argv[1]
 
 question_page = {
     "children": [],
@@ -73,8 +79,8 @@ text_response = {
 }
 
 master_json_data = {
-    "title": "IMQ Kysymyspatteristo 1.4",
-    "version": 1.4,
+    "title": "IMQ Kysymyspatteristo {}".format(questions_version),
+    "version": questions_version,
     "form": [],
     "languages": [
         {
@@ -86,8 +92,8 @@ master_json_data = {
 }
 
 master_json_data_flattened = {
-    "title": "IMQ Kysymyspatteristo 1.4",
-    "version": 1.4,
+    "title": "IMQ Kysymyspatteristo {}".format(questions_version),
+    "version": questions_version,
     "form": [{
         "children": [],
         "type": "page"
@@ -102,16 +108,17 @@ master_json_data_flattened = {
 }
 
 reverse_question_ids = [
-    line.rstrip('\n') for line in open("./{}/reverse_question_ids_1.4.txt"
-                                       .format(QUESTIONS_BASE_PATH))]
+    line.rstrip("\n") for line in open("./{0}/{1}/reverse_question_ids_{1}.txt"
+                                       .format(QUESTIONS_BASE_PATH,
+                                               questions_version))]
 
-with open("./{}/questions_1.4.txt"
-          .format(QUESTIONS_BASE_PATH)) as questions_file:
+with open("./{0}/{1}/questions_{1}.txt"
+          .format(QUESTIONS_BASE_PATH, questions_version)) as questions_file:
     for index, line in enumerate(questions_file):
         question_id = line[:12].strip()
         title = line[12:].strip()
 
-        if question_id == "avoin":
+        if "avoin" in question_id:
             question = copy.deepcopy(text_response)
         else:
             question = copy.deepcopy(single_choise_grid)
@@ -145,19 +152,21 @@ with open("./{}/questions_1.4.txt"
 #                  indent=4, sort_keys=True))
 
 # Add survey frame
-with open("./{}/master_frame.json"
-          .format(QUESTIONS_BASE_PATH)) as master_frame_json_file:
+with open("./{0}/{1}/master_frame_{1}.json"
+          .format(QUESTIONS_BASE_PATH, questions_version)
+          ) as master_frame_json_file:
     master_frame_json_data = json.load(master_frame_json_file)
-    PREPENDING_QUESTIONS_IN_FRAME = len(master_frame_json_data) - 1
+    # Two last questions go to the end of the survey.
+    PREPENDING_QUESTIONS_IN_FRAME = len(master_frame_json_data) - 2
     master_json_data["form"] = master_frame_json_data[
         :PREPENDING_QUESTIONS_IN_FRAME] + master_json_data[
         "form"] + master_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
 
-with open("./{}/master_latest.json"
-          .format(QUESTIONS_BASE_PATH), "w") as outfile:
+with open("./{0}/{1}/master_{1}.json"
+          .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
     json.dump(master_json_data, outfile, indent=2, ensure_ascii=False)
 
-with open("./{}/master_latest_flattened.json"
-          .format(QUESTIONS_BASE_PATH), "w") as outfile:
+with open("./{0}/{1}/master_flattened_{1}.json"
+          .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
     json.dump(master_json_data_flattened, outfile, indent=2,
               ensure_ascii=False)
