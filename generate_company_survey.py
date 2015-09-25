@@ -197,7 +197,7 @@ def get_flattened_questions():
 
 
 def get_survey_frame():
-    return read_json_file(".{0}/{1}/master_frame_{1}.json".format(
+    return read_json_file("./{0}/{1}/master_frame_{1}.json".format(
                                          QUESTIONS_BASE_PATH,
                                          questions_version))
 
