@@ -64,6 +64,20 @@ def insert_question_after(id, question):
                     break
 
 
+def rename_question(id, question):
+    for entry in company_survey_json_data["form"]:
+        if "children" in entry:
+            for index, child_entry in enumerate(entry["children"]):
+                if child_entry["id"] == id:
+                    print("nimettiin\t{0}\t\"{1}\"\n"
+                          "uudelleen\t\t\"{2}\""
+                          .format(child_entry["id"],
+                                  child_entry["title"]["fi"],
+                                  question["title"]["fi"]))
+                    child_entry["title"] = question["title"]
+                    break
+
+
 def insert_question_before(id, question):
     for entry in company_survey_json_data["form"]:
         if "children" in entry:
@@ -106,6 +120,8 @@ def merge_overlay_questions():
                         insert_question_before(j["BEFORE_ID"], j)
                     elif "AFTER_ID" in j:
                         insert_question_after(j["AFTER_ID"], j)
+                    elif "RENAME_ID" in j:
+                        rename_question(j["RENAME_ID"], j)
 
 
 def paginate_survey():
