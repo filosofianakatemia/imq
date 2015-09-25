@@ -72,6 +72,7 @@ text_response = {
     },
     "children": [
         {
+            "required": False,
             "type": "string"
         }
     ]
