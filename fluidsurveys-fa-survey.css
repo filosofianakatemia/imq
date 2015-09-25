@@ -1,4 +1,11 @@
 /*
+* Survey header
+*/
+.fs-chrome > .content .survey > .survey-header {
+  text-align: center;
+}
+
+/*
 * Survey title.
 */
 .fs-chrome > .content .survey h1 {
