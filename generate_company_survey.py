@@ -101,11 +101,94 @@ def insert_frame_question_after(id, question):
                     print("lisää\t{0}\t\"{1}\"\n"
                           "jälkeen\t{2}\t\"{3}\"\n"
                           "indeksi\t{4}\n".
-                          format(question["id"], question["title"],
-                                 child_entry["id"], child_entry["title"],
+                          format(question["id"], question["title"]["fi"],
+                                 child_entry["id"], child_entry["title"]["fi"],
                                  index + 1))
                     entry["children"].insert(index + 1, question)
                     break
+
+
+def validate_overlay_question_ids():
+    # add default question ids to list
+    overlay_question_ids = []
+    overlay_question_affect_ids = []
+    default_question_ids = []
+
+    # FIXME: Any way to not assign these?
+    message = ""
+    invalid_overlay = False
+    # FIXME
+
+    for entry in company_survey_json_data["form"]:
+        if "children" in entry:
+            for child_entry in entry["children"]:
+                default_question_ids.append(child_entry["id"])
+
+    if "form" in overlay_survey_json_data:
+        for i in overlay_survey_json_data["form"]:
+            if "children" in i:
+                for index, question in enumerate(i["children"]):
+                    if "id" not in question:
+                        if ("DELETE_ID" not in question and
+                                "RENAME_ID" not in question):
+                            # OK
+                            message = ("Kysymyksellä \"{0}\" ei ole id:tä"
+                                       .format(question["title"]["fi"]))
+                            invalid_overlay = True
+                            break
+                    else:
+                        if question["id"] in default_question_ids:
+                            # OK
+                            message = ("Kysymys id:llä {0} on jo olemassa"
+                                       .format(question["id"]))
+                            invalid_overlay = True
+                            break
+                        elif question["id"] in overlay_question_ids:
+                            # OK
+                            message = ("Kysymys id:llä {0} on jo olemassa"
+                                       .format(question["id"]))
+                            invalid_overlay = True
+                            break
+                        else:
+                            overlay_question_ids.append(question["id"])
+
+                    affect_id_type = get_affect_id_type(question)
+                    if not affect_id_type:
+                        # OK
+                        message = ("Kysymykselle {0} ei ole määritelty mitään "
+                                   "seuraavista kentistä: DELETE_ID, "
+                                   "BEFORE_ID, AFTER_ID, RENAME_ID".format(
+                                      question["id"]))
+                        invalid_overlay = True
+                        break
+                    elif (affect_id_type != "DELETE_ID" and
+                          affect_id_type != "RENAME_ID" and
+                          question[affect_id_type] == question["id"]):
+                        # OK
+                        message = ("Kysymyksen id {0} on sama kuin kysymyksen "
+                                   "kenttä {1}".format(question["id"],
+                                                       affect_id_type))
+                        invalid_overlay = True
+                        break
+                    else:
+                        overlay_question_affect_ids.append(
+                            question[affect_id_type])
+
+    return {
+        "message": message,
+        "error": invalid_overlay
+        }
+
+
+def get_affect_id_type(overlay_question):
+    if "DELETE_ID" in overlay_question:
+        return "DELETE_ID"
+    elif "BEFORE_ID" in overlay_question:
+        return "BEFORE_ID"
+    elif "AFTER_ID" in overlay_question:
+        return "AFTER_ID"
+    elif "RENAME_ID" in overlay_question:
+        return "RENAME_ID"
 
 
 def merge_overlay_questions():
@@ -214,15 +297,15 @@ def get_flattened_questions():
 
 def get_survey_frame():
     return read_json_file("./{0}/{1}/master_frame_{1}.json".format(
-                                         QUESTIONS_BASE_PATH,
-                                         questions_version))
+        QUESTIONS_BASE_PATH,
+        questions_version))
 
 
 def get_overlay_frame_and_merge_with_master():
     overlay_frame_json_file_path = ("./{0}/{1}/{2}/overlay_frame.json".format(
-                                SURVEY_DATA_BASE_PATH,
-                                company_name,
-                                survey_name))
+        SURVEY_DATA_BASE_PATH,
+        company_name,
+        survey_name))
     if os.path.isfile(overlay_frame_json_file_path):
         # Merge overlay frame with master.
         overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
@@ -319,6 +402,14 @@ number_of_default_questions = len(company_survey_json_data["form"][0][
                                   "children"])
 print("\nLisättiin {0} peruskysymystä".format(number_of_default_questions))
 
+print("\nTarkistetaan yrityskohtaiset tiedot virheiden varalta")
+overlay_questions_status = validate_overlay_question_ids()
+if overlay_questions_status["error"] == True:
+    print("Tapahtui virhe: {0}".format(overlay_questions_status["message"]))
+    exit()
+else:
+    print("Virheitä ei löytynyt.")
+print("Lisätään yrityskohtaiset tiedot.")
 merge_overlay_questions()
 
 number_of_questions = len(company_survey_json_data["form"][0]["children"])
