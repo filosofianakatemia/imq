@@ -9,9 +9,20 @@ import time
 SURVEY_DATA_BASE_PATH = "data"
 QUESTIONS_BASE_PATH = "kysymykset"
 
-response_id = sys.argv[1]
-company_name = sys.argv[2]
-survey_name = sys.argv[3]
+if len(sys.argv) < 2:
+    response_id = 853049
+    company_name = "sample-company"
+    survey_name = "sample-survey"
+    email = input('Email: ')
+    password = getpass.getpass()
+    response_as_json = True
+else:
+    response_id = sys.argv[1]
+    company_name = sys.argv[2]
+    survey_name = sys.argv[3]
+    email = input('Email: ')
+    password = getpass.getpass()
+    response_as_json = False
 
 
 def read_json_file(json_file_path):
@@ -19,14 +30,33 @@ def read_json_file(json_file_path):
         # TODO: check that file has content.
         return json.load(json_file)
 
-email = input('Email: ')
-password = getpass.getpass()
+# email = input('Email: ')
+# password = getpass.getpass()
 headers = {"Accept": "application/json"}
 
-# http://stackoverflow.com/a/53180
-get_response_url = (("https://fluidsurveys.com/api/v3/surveys/{0}/csv/"
-                     "?comma_separated=true&include_id=true&show_titles=false")
-                    .format(response_id))
+if response_as_json:
+    get_response_url = (("https://fluidsurveys.com/"
+                         "api/v2/surveys/{}/responses/?expand_GET"
+                         ).format(response_id))
+
+    get_survey_response = requests.get(get_response_url,
+                                       auth=(email, password), headers=headers)
+    if (get_survey_response.status_code == 200 or     # api v2
+            get_survey_response.status_code == 201):  # api v3
+
+        with open("./{0}/{1}/{2}/response.json".format(SURVEY_DATA_BASE_PATH,
+                                                       company_name,
+                                                       survey_name),
+                  "w") as outfile:
+            json.dump(get_survey_response.json(), outfile, indent=2,
+                      ensure_ascii=False)
+        exit()
+else:
+    # http://stackoverflow.com/a/53180
+    get_response_url = (("https://fluidsurveys.com/api/v3/surveys/{0}/csv/"
+                         "?comma_separated=true&include_id=true"
+                         "&show_titles=false")
+                        .format(response_id))
 
 get_survey_response = requests.get(get_response_url,
                                    auth=(email, password), headers=headers)
@@ -38,22 +68,16 @@ survey_json_file_path = ("./{0}/{1}/{2}/survey.json"
                                  survey_name))
 # Or call get_survey with response_id
 survey_json_data = read_json_file(survey_json_file_path)
+questions_version = survey_json_data["IMQ_VERSION"]
 
 # Get flattened questions.
-# FIXME
-master_survey_json_flattened_file_path = ("./{}/master_latest_flattened.json"
-                                          .format(QUESTIONS_BASE_PATH))
-# FIXME
+master_survey_json_flattened_file_path = ("./{0}/{1}/"
+                                          "master_flattened_{1}.json"
+                                          .format(QUESTIONS_BASE_PATH,
+                                                  questions_version))
+
 flattened_master_survey_json_data = read_json_file(
     master_survey_json_flattened_file_path)
-
-if survey_json_data["IMQ_VERSION"] == flattened_master_survey_json_data[
-        "version"]:
-        # Can use the latest :)
-    pass
-else:
-    # TODO: Use something else :O
-    print("No good")
 
 
 # http://stackoverflow.com/a/18516125
@@ -78,9 +102,13 @@ def columns_to_filter(row):
 def is_completed(response):
     for entry in response:
         if "Incomplete" in response:
+            # DEBUG
             return False
+            # DEBUG
 
+    # DEBUG
     return True
+    # DEBUG
 
 
 def is_survey_question(response_variable):
@@ -91,7 +119,7 @@ def is_survey_question(response_variable):
     if key_to_compare.endswith("}"):
         key_to_compare = key_to_compare[:-1]
 
-    if key_to_compare == "avoin":
+    if "avoin" in key_to_compare:
         pass
     else:
         if key_to_compare.endswith("_0"):
@@ -194,10 +222,10 @@ if get_survey_response.status_code == 200:
     timestamp = time.strftime('%Y-%m-%d')
 
     # TODO: Add company name.
-    full_responses = ("./{0}/{1}/{2}/full_responses-{0}.csv"
+    full_responses = ("./{0}/{1}/{2}/full_responses-{3}.csv"
                       .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
                               timestamp))
-    spss_responses = ("./{0}/{1}/{2}/spss_responses-{0}.csv"
+    spss_responses = ("./{0}/{1}/{2}/spss_responses-{3}.csv"
                       .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
                               timestamp))
     spss_question_ids = []
