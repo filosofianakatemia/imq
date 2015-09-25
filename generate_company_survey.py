@@ -44,8 +44,23 @@ def remove_question(id):
                 if child_entry["id"] == id:
                     print("poista\t{0}\t\"{1}\"\n".
                           format(child_entry["id"],
-                                 child_entry["title"]))
+                                 child_entry["title"]["fi"]))
                     entry["children"].remove(child_entry)
+                    break
+
+
+def insert_question_before(id, question):
+    for entry in company_survey_json_data["form"]:
+        if "children" in entry:
+            for index, child_entry in enumerate(entry["children"]):
+                if child_entry["id"] == id:
+                    print("lisää\t{0}\t\"{1}\"\n"
+                          "ennen\t{2}\t\"{3}\"\n"
+                          "indeksi\t{4}\n".
+                          format(question["id"], question["title"]["fi"],
+                                 child_entry["id"], child_entry["title"]["fi"],
+                                 index))
+                    entry["children"].insert(index, question)
                     break
 
 
@@ -57,8 +72,8 @@ def insert_question_after(id, question):
                     print("lisää\t{0}\t\"{1}\"\n"
                           "jälkeen\t{2}\t\"{3}\"\n"
                           "indeksi\t{4}\n".
-                          format(question["id"], question["title"],
-                                 child_entry["id"], child_entry["title"],
+                          format(question["id"], question["title"]["fi"],
+                                 child_entry["id"], child_entry["title"]["fi"],
                                  index + 1))
                     entry["children"].insert(index + 1, question)
                     break
@@ -75,21 +90,6 @@ def rename_question(id, question):
                                   child_entry["title"]["fi"],
                                   question["title"]["fi"]))
                     child_entry["title"] = question["title"]
-                    break
-
-
-def insert_question_before(id, question):
-    for entry in company_survey_json_data["form"]:
-        if "children" in entry:
-            for index, child_entry in enumerate(entry["children"]):
-                if child_entry["id"] == id:
-                    print("lisää\t{0}\t\"{1}\"\n"
-                          "ennen\t{2}\t\"{3}\"\n"
-                          "indeksi\t{4}\n".
-                          format(question["id"], question["title"],
-                                 child_entry["id"], child_entry["title"],
-                                 index))
-                    entry["children"].insert(index, question)
                     break
 
 
