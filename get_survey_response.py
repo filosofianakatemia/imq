@@ -1,28 +1,26 @@
 import csv
-import getpass
 import json
+import os
 import sys
 import re
 import requests
 import time
+import query_info
 
 SURVEY_DATA_BASE_PATH = "data"
 QUESTIONS_BASE_PATH = "kysymykset"
 
-if len(sys.argv) < 2:
-    response_id = 853049
-    company_name = "sample-company"
-    survey_name = "sample-survey"
-    email = input('Email: ')
-    password = getpass.getpass()
-    response_as_json = True
-else:
-    response_id = sys.argv[1]
-    company_name = sys.argv[2]
-    survey_name = sys.argv[3]
-    email = input('Email: ')
-    password = getpass.getpass()
-    response_as_json = False
+
+def get_company_name_and_survey_name():
+    survey_info = {}
+
+    if len(sys.argv) < 2:
+        survey_info = query_info.query_company_name_and_survey_name()
+    else:
+        survey_info["company_name"] = sys.argv[1]
+        survey_info["survey_name"] = sys.argv[2]
+
+    return survey_info
 
 
 def read_json_file(json_file_path):
@@ -30,54 +28,54 @@ def read_json_file(json_file_path):
         # TODO: check that file has content.
         return json.load(json_file)
 
-# email = input('Email: ')
-# password = getpass.getpass()
-headers = {"Accept": "application/json"}
 
-if response_as_json:
-    get_response_url = (("https://fluidsurveys.com/"
-                         "api/v2/surveys/{}/responses/?expand_GET"
-                         ).format(response_id))
+def get_survey_json_data(company_name, survey_name):
+    survey_json_file_path = ("./{0}/{1}/{2}/survey.json"
+                             .format(SURVEY_DATA_BASE_PATH,
+                                     company_name,
+                                     survey_name))
+    return read_json_file(survey_json_file_path)
 
-    get_survey_response = requests.get(get_response_url,
-                                       auth=(email, password), headers=headers)
-    if (get_survey_response.status_code == 200 or     # api v2
-            get_survey_response.status_code == 201):  # api v3
 
-        with open("./{0}/{1}/{2}/response.json".format(SURVEY_DATA_BASE_PATH,
-                                                       company_name,
-                                                       survey_name),
-                  "w") as outfile:
-            json.dump(get_survey_response.json(), outfile, indent=2,
-                      ensure_ascii=False)
-        exit()
-else:
-    # http://stackoverflow.com/a/53180
-    get_response_url = (("https://fluidsurveys.com/api/v3/surveys/{0}/csv/"
-                         "?comma_separated=true&include_id=true"
-                         "&show_titles=false")
-                        .format(response_id))
+def get_credentials():
+    credentials = {}
+    if len(sys.argv) < 4:
+        credentials = query_info.query_credentials()
+    else:
+        credentials["email"] = sys.argv[3]
+        credentials["password"] = sys.argv[4]
 
-get_survey_response = requests.get(get_response_url,
-                                   auth=(email, password), headers=headers)
+    return credentials
 
-# Get questions.
-survey_json_file_path = ("./{0}/{1}/{2}/survey.json"
-                         .format(SURVEY_DATA_BASE_PATH,
-                                 company_name,
-                                 survey_name))
-# Or call get_survey with response_id
-survey_json_data = read_json_file(survey_json_file_path)
-questions_version = survey_json_data["IMQ_VERSION"]
 
-# Get flattened questions.
-master_survey_json_flattened_file_path = ("./{0}/{1}/"
-                                          "master_flattened_{1}.json"
-                                          .format(QUESTIONS_BASE_PATH,
-                                                  questions_version))
+def get_response(id, as_json):
+    if as_json:
+        get_response_url = (("https://fluidsurveys.com/"
+                             "api/v2/surveys/{}/responses/?expand_GET"
+                             ).format(id))
 
-flattened_master_survey_json_data = read_json_file(
-    master_survey_json_flattened_file_path)
+        get_survey_response = requests.get(get_response_url,
+                                           auth=(email, password),
+                                           headers=headers)
+        if (get_survey_response.status_code == 200 or     # api v2
+                get_survey_response.status_code == 201):  # api v3
+
+            with open("./{0}/{1}/{2}/response.json"
+                      .format(SURVEY_DATA_BASE_PATH, company_name,
+                              survey_name),
+                      "w") as outfile:
+                json.dump(get_survey_response.json(), outfile, indent=2,
+                          ensure_ascii=False)
+            exit()
+    else:
+        # http://stackoverflow.com/a/53180
+        get_response_url = (("https://fluidsurveys.com/api/v3/surveys/{}/csv/"
+                             "?comma_separated=true&include_id=true"
+                             "&show_titles=false")
+                            .format(id))
+
+    return requests.get(get_response_url,
+                        auth=(email, password), headers=headers)
 
 
 # http://stackoverflow.com/a/18516125
@@ -102,13 +100,8 @@ def columns_to_filter(row):
 def is_completed(response):
     for entry in response:
         if "Incomplete" in response:
-            # DEBUG
             return False
-            # DEBUG
-
-    # DEBUG
     return True
-    # DEBUG
 
 
 def is_survey_question(response_variable):
@@ -185,49 +178,37 @@ def is_float(value):
         return False
 
 
-def generate_prepare_data_spss_syntax(question_ids):
-    measurement_level = set_question_measurement_level_to_scale(question_ids)
-    dataset_name = rename_dataset()
+def generate_response_files():
+    # questions_version = survey_json_data["IMQ_VERSION"]
 
-    with open("./{0}/{1}/{2}/prepare_data.sps".format(SURVEY_DATA_BASE_PATH,
-                                                      company_name,
-                                                      survey_name),
-              "wt") as out_file:
-        out_file.write(measurement_level + dataset_name)
+    # Get flattened questions.
+    # master_survey_json_flattened_file_path = ("./{0}/{1}/"
+    #                                           "master_flattened_{1}.json"
+    #                                           .format(QUESTIONS_BASE_PATH,
+    #                                                   questions_version))
 
+    # flattened_master_survey_json_data = read_json_file(
+    #     master_survey_json_flattened_file_path)
 
-def set_question_measurement_level_to_scale(question_ids):
-    measurement_level = "VARIABLE LEVEL\n"
-
-    for question_id in question_ids:
-        if not question_id.startswith("tt"):
-            # NOTE: Background question IDs starts with "tt"
-            # It could be better to check IDs against survey.json
-            measurement_level += ("{}(SCALE)\n".format(question_id))
-    measurement_level += ".\n"
-
-    return measurement_level
-
-
-def rename_dataset():
-    # NOTE: Dataset name can't contain dash, use undescore.
-    return "DATASET NAME {0}_{1}.".format("dataset", time.strftime('%Y%m%d'))
-
-
-if get_survey_response.status_code == 200:
     # http://stackoverflow.com/a/26209120
     get_survey_response.encoding = "utf8"
     # http://stackoverflow.com/a/16268214
     reader = csv.reader(get_survey_response.text.split("\n"))
-    timestamp = time.strftime('%Y-%m-%d')
+    yyyy_mm_dd = time.strftime("%Y_%m_%d")
+    # http://stackoverflow.com/a/5998359
+    timestamp = int(round(time.time() * 1000))
+
+    os.makedirs("./{0}/{1}/{2}/{3}/"
+                .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
+                        timestamp))
 
     # TODO: Add company name.
-    full_responses = ("./{0}/{1}/{2}/full_responses-{3}.csv"
+    full_responses = ("./{0}/{1}/{2}/{3}/full_responses_{4}.csv"
                       .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
-                              timestamp))
-    spss_responses = ("./{0}/{1}/{2}/spss_responses-{3}.csv"
+                              timestamp, yyyy_mm_dd))
+    spss_responses = ("./{0}/{1}/{2}/{3}/spss_responses_{4}.csv"
                       .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
-                              timestamp))
+                              timestamp, yyyy_mm_dd))
     spss_question_ids = []
 
     # UTF-8 http://stackoverflow.com/a/5181085
@@ -247,7 +228,7 @@ if get_survey_response.status_code == 200:
                 row_filtered_columns = []
 
                 if i == 0:
-                    key_to_compare_row = row
+                    # key_to_compare_row = row
                     filtered_columns = columns_to_filter(row)
                     for (j, column) in enumerate(row):
                         if (j not in filtered_columns and
@@ -280,4 +261,58 @@ if get_survey_response.status_code == 200:
                                 row_filtered_columns.append(column)
                 spss_responses_writer.writerow(row_filtered_columns)
 
-    generate_prepare_data_spss_syntax(spss_question_ids)
+    return {"spss_question_ids": spss_question_ids}
+
+
+def generate_prepare_data_spss_syntax(question_ids):
+    measurement_level = set_question_measurement_level_to_scale(question_ids)
+    dataset_name = rename_dataset()
+
+    with open("./{0}/{1}/{2}/prepare_data.sps".format(SURVEY_DATA_BASE_PATH,
+                                                      company_name,
+                                                      survey_name),
+              "wt") as out_file:
+        out_file.write(measurement_level + dataset_name)
+
+
+def set_question_measurement_level_to_scale(question_ids):
+    measurement_level = "VARIABLE LEVEL\n"
+
+    for question_id in question_ids:
+        if not question_id.startswith("tt"):
+            # NOTE: Background question IDs starts with "tt"
+            # It could be better to check IDs against survey.json
+            measurement_level += ("{}(SCALE)\n".format(question_id))
+    measurement_level += ".\n"
+
+    return measurement_level
+
+
+def rename_dataset():
+    # NOTE: Dataset name can't contain dash, use undescore.
+    return "DATASET NAME {0}_{1}.".format("dataset", time.strftime('%Y%m%d'))
+
+survey_info = get_company_name_and_survey_name()
+company_name = survey_info["company_name"]
+survey_name = survey_info["survey_name"]
+# Get questions, or call get_survey with survey_id.
+survey_json_data = get_survey_json_data(company_name, survey_name)
+survey_id = survey_json_data["id"]
+credentials = get_credentials()
+email = credentials["email"]
+password = credentials["password"]
+headers = {"Accept": "application/json"}
+response_as_json = False
+print("Haetaan kyselyä id:llä {}".format(survey_id))
+get_survey_response = get_response(survey_id, response_as_json)
+if get_survey_response.status_code == 200:
+    print("Kysely löytyi. Tallennetaan kysely ja luodaan vastauksista "
+          "tiedosto analyysia (SPSS/PSPP) varten.")
+    response_data = generate_response_files()
+    print("Kysely tallennettu ja tiedosto luotu.")
+    print("Luodaan analyysin syntaksitiedosto.")
+    generate_prepare_data_spss_syntax(response_data["spss_question_ids"])
+    print("Analyysin syntaksitiedosto luotu.")
+else:
+    print("Kyselyä ei löytynyt. Yritä uudelleen.")
+    exit()
