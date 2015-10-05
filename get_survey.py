@@ -5,22 +5,40 @@ import json
 import sys
 import requests
 
-survey_id = sys.argv[1]
 
-email = input('Email: ')
-password = getpass.getpass()
-headers = {"Accept": "application/json"}
+def get_survey(*args, **kwargs):
+    email = kwargs.get("email", None)
+    password = kwargs.get("password", None)
+    if not email:
+        email = input("Email: ")
+    if not password:
+        password = getpass.getpass()
 
-# http://stackoverflow.com/a/53180
-get_survey_url = "https://fluidsurveys.com/api/v2/surveys/%s/?structure" % \
-  survey_id
+    survey_id = kwargs.get("id", None)
+    if not survey_id:
+        survey_id = sys.argv[1]
 
-get_survey_details = requests.get(get_survey_url,
-                                  auth=(email, password), headers=headers)
-if get_survey_details.status_code == 200:
-    # http://stackoverflow.com/a/12944035
-    survey_json = json.loads(get_survey_details.text)
-    print(json.dumps(survey_json, indent=4, sort_keys=True))
+    details = kwargs.get("details", None)
 
-else:
-    print("Request failed")
+    if not details:
+        get_survey_url = "https://fluidsurveys.com/api/v2/surveys/{}/".format(
+            survey_id)
+    else:
+        get_survey_url = ("https://fluidsurveys.com/api/v2/surveys/{}/"
+                          "?structure").format(survey_id)
+
+    headers = {"Accept": "application/json"}
+
+    get_survey_details = requests.get(get_survey_url,
+                                      auth=(email, password), headers=headers)
+    if get_survey_details.status_code == 200:
+        # http://stackoverflow.com/a/12944035
+        survey_json = json.loads(get_survey_details.text)
+        print_survey = kwargs.get("print", None)
+        if not print_survey:
+            return survey_json
+        else:
+            print(json.dumps(survey_json, indent=4, sort_keys=True))
+
+    else:
+        print("Request failed")
