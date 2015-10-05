@@ -1,10 +1,10 @@
 import copy
-import getpass
 import json
 import os.path
 import requests
 import sys
 import uuid
+import query_info
 import list_surveys
 
 SURVEY_DATA_BASE_PATH = "data"
@@ -226,27 +226,16 @@ def paginate_survey():
                 index + 1]["children"].extend(sliced_questions)
 
 
-def get_company_and_survey_name():
-    global company_name
-    global survey_name
+def get_company_name_and_survey_name():
+    survey_info = {}
 
-    # http://stackoverflow.com/a/18413162
     if len(sys.argv) < 2:
-        while True:
-            company_name = input("Yrityksen nimi: ")
-            survey_name = input("Kyselyn nimi: ")
-            if (company_name and survey_name and
-                    os.path.isdir("{0}/{1}/{2}".format(SURVEY_DATA_BASE_PATH,
-                                                       company_name,
-                                                       survey_name))):
-                break
-            else:
-                print("Kyselyä antamillasi tiedoilla ei löydy. Tarkista "
-                      "yrityksen ja kyselyn nimi ja että olet luonut "
-                      "hakemistot.")
+        survey_info = query_info.query_company_name_and_survey_name()
     else:
-        company_name = sys.argv[1]
-        survey_name = sys.argv[2]
+        survey_info["company_name"] = sys.argv[1]
+        survey_info["survey_name"] = sys.argv[2]
+
+    return survey_info
 
 
 def get_overlay_survey(company_name, survey_name):
@@ -258,15 +247,15 @@ def get_overlay_survey(company_name, survey_name):
         return overlay_survey_json_data
 
 
-def query_credentials():
+def get_credentials():
+    credentials = {}
     if len(sys.argv) < 4:
-        email = input("Sähköposti: ")
-        password = getpass.getpass()
+        credentials = query_info.query_credentials()
     else:
-        email = sys.argv[3]
-        password = sys.argv[4]
+        credentials["email"] = sys.argv[3]
+        credentials["password"] = sys.argv[4]
 
-    return {"email": email, "password": password}
+    return credentials
 
 
 def get_existing_surveys(credentials):
@@ -373,15 +362,15 @@ def rename_survey(survey_id, name, survey_status, credentials):
 
 
 print("Tervetuloa luomaan IMQ-kyselyä!")
-company_name = None
-survey_name = None
-get_company_and_survey_name()
+survey_info = get_company_name_and_survey_name()
+company_name = survey_info["company_name"]
+survey_name = survey_info["survey_name"]
 overlay_survey_json_data = get_overlay_survey(company_name, survey_name)
 if not overlay_survey_json_data:
     print("Sinun täytyy luoda kyselykohtainen overlay.json-tiedosto.")
     exit()
 print("Haetaan olemassa olevat kyselyt.")
-credentials = query_credentials()
+credentials = get_credentials()
 surveys = get_existing_surveys(credentials)
 if is_existing_survey(company_name, survey_name, surveys):
     print("Kysely on jo olemassa. Poista vanha kysely FluidSurveysista")
