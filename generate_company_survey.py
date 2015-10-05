@@ -351,11 +351,11 @@ def update_survey_data_and_save(new_survey_json_data):
                   ensure_ascii=False)
 
 
-def rename_survey(survey_id, name, credentials):
+def rename_survey(survey_id, name, survey_status, credentials):
     headers = {"Content-Type": "application/json"}
     url = "https://fluidsurveys.com/api/v3/surveys/{}/".format(
         survey_id)
-    data = json.dumps({"name": name})
+    data = json.dumps({"name": name, "live": survey_status})
 
     # TODO: use edit_survey
     ren = requests.put(url,
@@ -396,6 +396,11 @@ company_survey_json_data = get_flattened_questions()
 company_survey_json_data["name"] = overlay_survey_json_data["name"]
 company_survey_json_data["title"] = overlay_survey_json_data["name"]
 company_survey_json_data["IMQ_VERSION"] = company_survey_json_data["version"]
+if not overlay_survey_json_data["live"]:
+    company_survey_json_data["live"] = 0
+else:
+    company_survey_json_data["live"] = overlay_survey_json_data["live"]
+
 del company_survey_json_data["version"]
 
 number_of_default_questions = len(company_survey_json_data["form"][0][
@@ -439,7 +444,7 @@ if query_create_new_survey():
         print("Päivitetään kyselyn nimi.")
         rename_survey(company_survey_json_data["id"],
                       "{0}-{1}".format(company_name, survey_name),
-                      credentials)
+                      company_survey_json_data["live"], credentials)
         print("Kysely on nyt luotu.")
 else:
     print("Loppu")
