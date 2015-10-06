@@ -92,8 +92,7 @@ def valid_uuid(uuid):
 def columns_to_filter(row):
     filtered_columns = []
     for j, entry in enumerate(row):
-        if ("completed" not in row[j] and
-                is_survey_question(row[j]) is False):
+        if ("completed" not in row[j] and is_survey_question(row[j]) is False):
             filtered_columns.append(j)
 
     return filtered_columns
@@ -299,6 +298,10 @@ def rename_dataset():
     # NOTE: Dataset name can't contain dash, use undescore.
     return "DATASET NAME {0}_{1}.".format("dataset", time.strftime('%Y%m%d'))
 
+
+def generate_spss_analysis_syntax():
+    return False
+
 survey_info = get_company_name_and_survey_name()
 company_name = survey_info["company_name"]
 survey_name = survey_info["survey_name"]
@@ -320,6 +323,7 @@ if get_survey_response.status_code == 200:
     print("Luodaan dataa valmisteleva syntaksitiedosto.")
     generate_prepare_data_spss_syntax(response_data["spss_question_ids"])
     print("Dataa valmisteleva syntaksitiedosto luotu.")
+    generate_spss_analysis_syntax()
     # print("Luodaan analyysin syntaksitiedosto.")
     # print("Analyysin syntaksitiedosto luotu.")
 else:
