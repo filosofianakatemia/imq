@@ -178,7 +178,7 @@ def is_float(value):
         return False
 
 
-def generate_response_files():
+def create_response_files():
     # questions_version = survey_json_data["IMQ_VERSION"]
 
     # Get flattened questions.
@@ -190,10 +190,6 @@ def generate_response_files():
     # flattened_master_survey_json_data = read_json_file(
     #     master_survey_json_flattened_file_path)
 
-    # http://stackoverflow.com/a/26209120
-    get_survey_response.encoding = "utf8"
-    # http://stackoverflow.com/a/16268214
-    reader = csv.reader(get_survey_response.text.split("\n"))
     yyyy_mm_dd = time.strftime("%Y_%m_%d")
     # http://stackoverflow.com/a/5998359
     timestamp = int(round(time.time() * 1000))
@@ -209,15 +205,26 @@ def generate_response_files():
     spss_responses = ("./{0}/{1}/{2}/{3}/spss_responses_{4}.csv"
                       .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
                               timestamp, yyyy_mm_dd))
+
+    return {"full": full_responses, "spss": spss_responses}
+
+
+def generate_response_files():
+    # http://stackoverflow.com/a/26209120
+    get_survey_response.encoding = "utf8"
+    # http://stackoverflow.com/a/16268214
+    reader = csv.reader(get_survey_response.text.split("\n"))
     spss_question_ids = []
 
+    response_files = create_response_files()
+
     # UTF-8 http://stackoverflow.com/a/5181085
-    with open(full_responses, "w", newline="",
+    with open(response_files["full"], "w", newline="",
               encoding="utf8") as full_responses:
         # http://importpython.blogspot.fi/2009/12/how-to-get-todays-date-in-yyyymmdd.html
         full_responses_writer = csv.writer(full_responses, quotechar="'",
                                            quoting=csv.QUOTE_NONNUMERIC)
-        with open(spss_responses, "w", newline="",
+        with open(response_files["spss"], "w", newline="",
                   encoding="utf8") as spss_responses:
             spss_responses_writer = csv.writer(spss_responses, quotechar="'",
                                                quoting=csv.QUOTE_NONNUMERIC)
