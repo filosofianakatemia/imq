@@ -9,6 +9,8 @@ import query_info
 
 SURVEY_DATA_BASE_PATH = "data"
 QUESTIONS_BASE_PATH = "kysymykset"
+# http://stackoverflow.com/a/5998359
+TIMESTAMP = int(round(time.time() * 1000))
 
 
 def get_company_name_and_survey_name():
@@ -191,20 +193,18 @@ def create_response_files():
     #     master_survey_json_flattened_file_path)
 
     yyyy_mm_dd = time.strftime("%Y_%m_%d")
-    # http://stackoverflow.com/a/5998359
-    timestamp = int(round(time.time() * 1000))
 
     os.makedirs("./{0}/{1}/{2}/{3}/"
                 .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
-                        timestamp))
+                        TIMESTAMP))
 
     # TODO: Add company name.
     full_responses = ("./{0}/{1}/{2}/{3}/full_responses_{4}.csv"
                       .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
-                              timestamp, yyyy_mm_dd))
+                              TIMESTAMP, yyyy_mm_dd))
     spss_responses = ("./{0}/{1}/{2}/{3}/spss_responses_{4}.csv"
                       .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
-                              timestamp, yyyy_mm_dd))
+                              TIMESTAMP, yyyy_mm_dd))
 
     return {"full": full_responses, "spss": spss_responses}
 
@@ -275,9 +275,9 @@ def generate_prepare_data_spss_syntax(question_ids):
     measurement_level = set_question_measurement_level_to_scale(question_ids)
     dataset_name = rename_dataset()
 
-    with open("./{0}/{1}/{2}/prepare_data.sps".format(SURVEY_DATA_BASE_PATH,
-                                                      company_name,
-                                                      survey_name),
+    with open("./{0}/{1}/{2}/{3}/prepare_data.sps"
+              .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
+                      TIMESTAMP),
               "wt") as out_file:
         out_file.write(measurement_level + dataset_name)
 
@@ -317,9 +317,11 @@ if get_survey_response.status_code == 200:
           "tiedosto analyysia (SPSS/PSPP) varten.")
     response_data = generate_response_files()
     print("Kysely tallennettu ja tiedosto luotu.")
-    print("Luodaan analyysin syntaksitiedosto.")
+    print("Luodaan dataa valmisteleva syntaksitiedosto.")
     generate_prepare_data_spss_syntax(response_data["spss_question_ids"])
-    print("Analyysin syntaksitiedosto luotu.")
+    print("Dataa valmisteleva syntaksitiedosto luotu.")
+    # print("Luodaan analyysin syntaksitiedosto.")
+    # print("Analyysin syntaksitiedosto luotu.")
 else:
     print("Kyselyä ei löytynyt. Yritä uudelleen.")
     exit()
