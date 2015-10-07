@@ -299,8 +299,33 @@ def rename_dataset():
     return "DATASET NAME {0}_{1}.".format("dataset", time.strftime('%Y%m%d'))
 
 
-def generate_spss_analysis_syntax():
-    return False
+def generate_analysis_syntax():
+    formulas = generate_analysis_formulas_map()
+
+
+def generate_analysis_formulas_map():
+    formulas = {}
+    for entry in survey_json_data["form"]:
+        if "children" in entry:
+            for child_entry in entry["children"]:
+                if "SPSS_FORMULAS" in child_entry:
+                    for question_formula_entry in child_entry["SPSS_FORMULAS"]:
+                        formula_name = question_formula_entry["name"]
+                        if formula_name not in formulas:
+                            formulas[formula_name] = []
+                        for formula_id in question_formula_entry["ids"]:
+                            formula_id_found = False
+                            for entry in formulas[formula_name]:
+                                if entry["id"] == formula_id:
+                                    formula_id_found = True
+                                    entry["questions"].append(child_entry[
+                                                              "id"])
+                            if not formula_id_found:
+                                formulas[formula_name].append({
+                                    "id": formula_id,
+                                    "questions": [child_entry["id"]]
+                                })
+    return formulas
 
 survey_info = get_company_name_and_survey_name()
 company_name = survey_info["company_name"]
@@ -323,7 +348,7 @@ if get_survey_response.status_code == 200:
     print("Luodaan dataa valmisteleva syntaksitiedosto.")
     generate_prepare_data_spss_syntax(response_data["spss_question_ids"])
     print("Dataa valmisteleva syntaksitiedosto luotu.")
-    generate_spss_analysis_syntax()
+    generate_analysis_syntax()
     # print("Luodaan analyysin syntaksitiedosto.")
     # print("Analyysin syntaksitiedosto luotu.")
 else:
