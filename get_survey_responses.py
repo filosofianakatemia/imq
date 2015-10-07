@@ -301,6 +301,34 @@ def rename_dataset():
 
 def generate_analysis_syntax():
     formulas = generate_analysis_formulas_map()
+    # Main parameters first
+    primary_formulas = []
+    secondary_formulas = []
+    for average_formula in formulas["average"]:
+        if "visited" not in average_formula:
+            average_formula["visited"] = True
+            formula = generate_average_formula(average_formula["id"],
+                                               average_formula["questions"])
+            if is_main_formula(average_formula["id"]):
+                primary_formulas.append(formula)
+            else:
+                secondary_formulas.append(formula)
+            for reliability_formula in formulas["reliability"]:
+                if ("visited" not in reliability_formula and
+                        average_formula["id"] == reliability_formula["id"]):
+                    reliability_formula["visited"] = True
+                    formula = generate_reliability_formula(
+                            reliability_formula["id"],
+                            reliability_formula["questions"])
+                    if is_main_formula(reliability_formula["id"]):
+                        primary_formulas.append(formula)
+                    else:
+                        secondary_formulas.append(formula)
+                    break
+
+    formulas_string = "\n\n".join(primary_formulas) + "\n\n"
+    formulas_string += "\n\n".join(secondary_formulas)
+    return formulas_string
 
 
 def generate_analysis_formulas_map():
@@ -326,6 +354,29 @@ def generate_analysis_formulas_map():
                                     "questions": [child_entry["id"]]
                                 })
     return formulas
+
+
+def is_main_formula(formula_id):
+    if (formula_id == "virtaus" or
+            formula_id == "vastuu2" or formula_id == "vapaus"):
+        return True
+
+
+def generate_average_formula(formula_id, question_ids):
+    mean = "COMPUTE {}=(\n".format(formula_id)
+    mean += "+\n".join(question_ids)
+    mean += "\n)/{}".format(len(question_ids))
+    mean += "\nEXECUTE."
+    return mean
+
+
+def generate_reliability_formula(formula_id, question_ids):
+    reliability = "RELIABILITY"
+    reliability += "\n/VARIABLES=\n"
+    reliability += "\n".join(question_ids)
+    reliability += "\n/SCALE('ALL VARIABLES') ALL"
+    reliability += "\n/MODEL=ALPHA."
+    return reliability
 
 survey_info = get_company_name_and_survey_name()
 company_name = survey_info["company_name"]
