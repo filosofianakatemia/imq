@@ -124,14 +124,20 @@ def add_spss_formula_info(question):
 
 
 def append_formulas_to_question(question, formulas_data):
-    for formula in formulas_data["formulas"]:
-        formula_name = formula
-        if "SPSS_FORMULAS" not in question:
-            question["SPSS_FORMULAS"] = {}
-        if formula_name not in question["SPSS_FORMULAS"]:
-            question["SPSS_FORMULAS"][formula_name] = []
-        question["SPSS_FORMULAS"][formula_name].append(formulas_data["name"])
+    if "SPSS_FORMULAS" not in question:
+        question["SPSS_FORMULAS"] = []
+    for formula_name in formulas_data["formulas"]:
 
+        formula_entry_found = False
+        for question_formula_entry in question["SPSS_FORMULAS"]:
+            if question_formula_entry["name"] == formula_name:
+                question_formula_entry["ids"].append(formulas_data["id"])
+                formula_entry_found = True
+                break
+
+        if not formula_entry_found:
+            question["SPSS_FORMULAS"].append({"name": formula_name,
+                                             "ids": [formulas_data["id"]]})
 
 with open("./{0}/{1}/questions_{1}.txt"
           .format(QUESTIONS_BASE_PATH, questions_version)) as questions_file:
