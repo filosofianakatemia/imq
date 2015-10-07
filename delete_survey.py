@@ -1,10 +1,11 @@
-import getpass
 import sys
 import requests
 import get_survey
+import query_info
 
-email = input('Email: ')
-password = getpass.getpass()
+credentials = query_info.query_credentials()
+email = credentials["email"]
+password = credentials["password"]
 # http://www.tutorialspoint.com/python/python_command_line_arguments.htm
 survey_id = str(sys.argv[1])
 print("Getting survey details")

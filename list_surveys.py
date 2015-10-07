@@ -1,8 +1,8 @@
 # https://gist.github.com/rmoff/9474035#file-fs_example-py-L16-L32
 
-import getpass
 import json
 import requests
+import query_info
 
 # List all surveys
 get_list_surveys_url = "https://fluidsurveys.com/api/v3/surveys/?page_size=100"
@@ -18,10 +18,10 @@ def get_surveys_and_print():
 def get_surveys(*args, **kwargs):
     email = kwargs.get("email", None)
     password = kwargs.get("password", None)
-    if not email:
-        email = input("Email: ")
-    if not password:
-        password = getpass.getpass()
+    if not email and not password:
+        credentials = query_info.query_credentials()
+        email = credentials["email"]
+        password = credentials["password"]
     headers = {"Accept": "application/json"}
 
     list_surveys(get_list_surveys_url, email, password, headers)
