@@ -365,7 +365,7 @@ def is_main_formula(formula_id):
 def generate_average_formula(formula_id, question_ids):
     mean = "COMPUTE {}=(\n".format(formula_id)
     mean += "+\n".join(question_ids)
-    mean += "\n)/{}".format(len(question_ids))
+    mean += "\n)/{}.".format(len(question_ids))
     mean += "\nEXECUTE."
     return mean
 
@@ -377,6 +377,14 @@ def generate_reliability_formula(formula_id, question_ids):
     reliability += "\n/SCALE('ALL VARIABLES') ALL"
     reliability += "\n/MODEL=ALPHA."
     return reliability
+
+
+def save_analysis_syntax(syntax):
+    with open("./{0}/{1}/{2}/{3}/analysis.sps"
+              .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
+                      TIMESTAMP),
+              "wt") as out_file:
+        out_file.write(syntax)
 
 survey_info = get_company_name_and_survey_name()
 company_name = survey_info["company_name"]
@@ -399,9 +407,16 @@ if get_survey_response.status_code == 200:
     print("Luodaan dataa valmisteleva syntaksitiedosto.")
     generate_prepare_data_spss_syntax(response_data["spss_question_ids"])
     print("Dataa valmisteleva syntaksitiedosto luotu.")
-    generate_analysis_syntax()
-    # print("Luodaan analyysin syntaksitiedosto.")
-    # print("Analyysin syntaksitiedosto luotu.")
+    print("Luodaan analyysin syntaksitiedosto.")
+    analysis_syntax = generate_analysis_syntax()
+    save_analysis_syntax(analysis_syntax)
+    print("Analyysin syntaksitiedosto luotu.")
+    print("Vastausten hakeminen valmis. Tiedostot luotu kansioon "
+          "{0}/{1}/{2}/{3}/{4}/".format(os.getcwd(),
+                                        SURVEY_DATA_BASE_PATH,
+                                        company_name,
+                                        survey_name,
+                                        TIMESTAMP))
 else:
     print("Kyselyä ei löytynyt. Yritä uudelleen.")
     exit()
