@@ -112,6 +112,27 @@ reverse_question_ids = [
                                        .format(QUESTIONS_BASE_PATH,
                                                questions_version))]
 
+
+def add_spss_formula_info(question):
+    with open(("./{0}/{1}/spss_formulas_{1}.json").format(QUESTIONS_BASE_PATH,
+              questions_version)) as spss_formulas_file:
+        spss_formulas_json_data = json.load(spss_formulas_file)
+        for formulas_data in spss_formulas_json_data:
+            if "children" in formulas_data:
+                if question["id"] in formulas_data["children"]:
+                    append_formulas_to_question(question, formulas_data)
+
+
+def append_formulas_to_question(question, formulas_data):
+    for formula in formulas_data["formulas"]:
+        formula_name = formula
+        if "SPSS_FORMULAS" not in question:
+            question["SPSS_FORMULAS"] = {}
+        if formula_name not in question["SPSS_FORMULAS"]:
+            question["SPSS_FORMULAS"][formula_name] = []
+        question["SPSS_FORMULAS"][formula_name].append(formulas_data["name"])
+
+
 with open("./{0}/{1}/questions_{1}.txt"
           .format(QUESTIONS_BASE_PATH, questions_version)) as questions_file:
     for index, line in enumerate(questions_file):
@@ -129,6 +150,8 @@ with open("./{0}/{1}/questions_{1}.txt"
 
         if question_id in reverse_question_ids:
             question["REVERSE_VALUE"] = True
+
+        add_spss_formula_info(question)
 
         place = math.floor((index) / 9)
 
