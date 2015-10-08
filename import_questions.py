@@ -113,9 +113,18 @@ reverse_question_ids = [
                                                questions_version))]
 
 
+def add_spss_formula_info_to_background_questions(master_frame_json_data):
+    for entry in master_frame_json_data:
+        if "children" in entry:
+            for child_entry in entry["children"]:
+                if child_entry["id"].startswith("tt"):
+                    add_spss_formula_info(child_entry)
+
+
 def add_spss_formula_info(question):
-    with open(("./{0}/{1}/spss_formulas_{1}.json").format(QUESTIONS_BASE_PATH,
-              questions_version)) as spss_formulas_file:
+    with open(("./{0}/{1}/spss_formulas_{1}.json")
+              .format(QUESTIONS_BASE_PATH, questions_version)
+              ) as spss_formulas_file:
         spss_formulas_json_data = json.load(spss_formulas_file)
         for formulas_data in spss_formulas_json_data:
             if "children" in formulas_data:
@@ -136,8 +145,9 @@ def append_formulas_to_question(question, formulas_data):
                 break
 
         if not formula_entry_found:
-            question["SPSS_FORMULAS"].append({"name": formula_name,
-                                             "ids": [formulas_data["id"]]})
+            question["SPSS_FORMULAS"].append(
+                {"name": formula_name, "ids": [formulas_data["id"]]})
+
 
 with open("./{0}/{1}/questions_{1}.txt"
           .format(QUESTIONS_BASE_PATH, questions_version)) as questions_file:
@@ -185,6 +195,7 @@ with open("./{0}/{1}/master_frame_{1}.json"
           .format(QUESTIONS_BASE_PATH, questions_version)
           ) as master_frame_json_file:
     master_frame_json_data = json.load(master_frame_json_file)
+    add_spss_formula_info_to_background_questions(master_frame_json_data)
     # Two last questions go to the end of the survey.
     PREPENDING_QUESTIONS_IN_FRAME = len(master_frame_json_data) - 2
     master_json_data["form"] = master_frame_json_data[
@@ -199,3 +210,7 @@ with open("./{0}/{1}/master_flattened_{1}.json"
           .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
     json.dump(master_json_data_flattened, outfile, indent=2,
               ensure_ascii=False)
+
+with open("./{0}/{1}/master_frame_{1}.json"
+          .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
+    json.dump(master_frame_json_data, outfile, indent=2, ensure_ascii=False)
