@@ -304,27 +304,38 @@ def generate_analysis_syntax():
     # Main parameters first
     primary_formulas = []
     secondary_formulas = []
-    for average_formula in formulas["average"]:
-        if "visited" not in average_formula:
-            average_formula["visited"] = True
-            formula = generate_average_formula(average_formula["id"],
-                                               average_formula["questions"])
-            if is_main_formula(average_formula["id"]):
-                primary_formulas.append(formula)
-            else:
-                secondary_formulas.append(formula)
-            for reliability_formula in formulas["reliability"]:
-                if ("visited" not in reliability_formula and
-                        average_formula["id"] == reliability_formula["id"]):
-                    reliability_formula["visited"] = True
-                    formula = generate_reliability_formula(
-                            reliability_formula["id"],
-                            reliability_formula["questions"])
-                    if is_main_formula(reliability_formula["id"]):
-                        primary_formulas.append(formula)
-                    else:
-                        secondary_formulas.append(formula)
-                    break
+    if "average" in formulas:
+        for average_formula in formulas["average"]:
+            if "visited" not in average_formula:
+                average_formula["visited"] = True
+                append_average_formula(average_formula, primary_formulas,
+                                       secondary_formulas)
+                if "reliability" in formulas:
+                    for reliability_formula in formulas["reliability"]:
+                        if ("visited" not in reliability_formula and
+                                average_formula["id"] == reliability_formula[
+                                "id"]):
+                            # Formula is an AVERAGE-RELIABILITY-tuple.
+                            reliability_formula["visited"] = True
+                            append_reliability_formula(reliability_formula,
+                                                       primary_formulas,
+                                                       secondary_formulas)
+                            break
+
+    if "reliability" in formulas:
+        for reliability_formula in formulas["reliability"]:
+            if "visited" not in reliability_formula:
+                reliability_formula["visited"] = True
+                append_reliability_formula(reliability_formula,
+                                           primary_formulas,
+                                           secondary_formulas)
+
+    if "frequency" in formulas:
+        for frequency_formula in formulas["frequency"]:
+            if "visited" not in frequency_formula:
+                frequency_formula["visited"] = True
+                append_frequency_formula(frequency_formula, primary_formulas,
+                                         secondary_formulas)
 
     formulas_string = "\n\n".join(primary_formulas) + "\n\n"
     formulas_string += "\n\n".join(secondary_formulas)
@@ -356,6 +367,37 @@ def generate_analysis_formulas_map():
     return formulas
 
 
+def append_average_formula(average_formula, primary_formulas,
+                           secondary_formulas):
+    formula_string = generate_average_formula(average_formula["id"],
+                                              average_formula["questions"])
+    append_formula(formula_string, average_formula["id"], primary_formulas,
+                   secondary_formulas)
+
+
+def append_reliability_formula(reliability_formula, primary_formulas,
+                               secondary_formulas):
+    formula_string = generate_reliability_formula(
+        reliability_formula["id"], reliability_formula["questions"])
+    append_formula(formula_string, reliability_formula["id"], primary_formulas,
+                   secondary_formulas)
+
+
+def append_frequency_formula(frequency_formula, primary_formulas,
+                             secondary_formulas):
+    formula_string = generate_frequency_formula(frequency_formula["questions"])
+    append_formula(formula_string, frequency_formula["id"], primary_formulas,
+                   secondary_formulas)
+
+
+def append_formula(formula, formula_id, primary_formulas, secondary_formulas):
+    print(formula)
+    if is_main_formula(formula_id):
+        primary_formulas.append(formula)
+    else:
+        secondary_formulas.append(formula)
+
+
 def is_main_formula(formula_id):
     if (formula_id == "virtaus" or
             formula_id == "vastuu2" or formula_id == "vapaus"):
@@ -377,6 +419,17 @@ def generate_reliability_formula(formula_id, question_ids):
     reliability += "\n/SCALE('ALL VARIABLES') ALL"
     reliability += "\n/MODEL=ALPHA."
     return reliability
+
+
+def generate_frequency_formula(question_ids):
+    frequency = "FREQUENCIES"
+    frequency += "\n/VARIABLES=\n"
+    frequency += "\n".join(question_ids)
+    frequency += "\n/NTILES=4"
+    frequency += "\n/STATISTICS=STDDEV MEAN"
+    frequency += "\n/HISTOGRAM NORMAL"
+    frequency += "\n/ORDER=ANALYSIS."
+    return frequency
 
 
 def save_analysis_syntax(syntax):
