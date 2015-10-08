@@ -379,6 +379,7 @@ if is_existing_survey(company_name, survey_name, surveys):
 else:
     print("Kyselyä ei löytynyt. Luodaan uusi kysely.")
 questions_version = get_latest_questions_version()
+print("Käytetään IMQ-kysymyspatteriston versiota {}".format(questions_version))
 company_survey_json_data = get_flattened_questions()
 
 # Update main attributes.
