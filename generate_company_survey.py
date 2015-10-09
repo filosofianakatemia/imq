@@ -131,20 +131,17 @@ def validate_overlay_question_ids():
                     if "id" not in question:
                         if ("DELETE_ID" not in question and
                                 "RENAME_ID" not in question):
-                            # OK
                             message = ("Kysymyksellä \"{0}\" ei ole id:tä"
                                        .format(question["title"]["fi"]))
                             invalid_overlay = True
                             break
                     else:
                         if question["id"] in default_question_ids:
-                            # OK
                             message = ("Kysymys id:llä {0} on jo olemassa"
                                        .format(question["id"]))
                             invalid_overlay = True
                             break
                         elif question["id"] in overlay_question_ids:
-                            # OK
                             message = ("Kysymys id:llä {0} on jo olemassa"
                                        .format(question["id"]))
                             invalid_overlay = True
@@ -154,7 +151,6 @@ def validate_overlay_question_ids():
 
                     affect_id_type = get_affect_id_type(question)
                     if not affect_id_type:
-                        # OK
                         message = ("Kysymykselle {0} ei ole määritelty mitään "
                                    "seuraavista kentistä: DELETE_ID, "
                                    "BEFORE_ID, AFTER_ID, RENAME_ID".format(
@@ -164,7 +160,6 @@ def validate_overlay_question_ids():
                     elif (affect_id_type != "DELETE_ID" and
                           affect_id_type != "RENAME_ID" and
                           question[affect_id_type] == question["id"]):
-                        # OK
                         message = ("Kysymyksen id {0} on sama kuin kysymyksen "
                                    "kenttä {1}".format(question["id"],
                                                        affect_id_type))
