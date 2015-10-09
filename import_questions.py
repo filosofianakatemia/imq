@@ -153,8 +153,11 @@ def add_spss_sum_formula_info():
     with open(("./{0}/{1}/spss_sum_formulas_{1}.json")
               .format(QUESTIONS_BASE_PATH, questions_version)
               ) as spss_sum_formulas_file:
-        master_json_data["SPSS_SUM_FORMULAS"] = json.load(
+        spss_sum_formulas_json_data = json.load(
             spss_sum_formulas_file)
+        master_json_data["SPSS_SUM_FORMULAS"] = spss_sum_formulas_json_data
+        master_json_data_flattened[
+            "SPSS_SUM_FORMULAS"] = spss_sum_formulas_json_data
 
 
 with open("./{0}/{1}/questions_{1}.txt"
