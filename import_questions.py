@@ -149,6 +149,14 @@ def append_formulas_to_question(question, formulas_data):
                 {"name": formula_name, "ids": [formulas_data["id"]]})
 
 
+def add_spss_sum_formula_info():
+    with open(("./{0}/{1}/spss_sum_formulas_{1}.json")
+              .format(QUESTIONS_BASE_PATH, questions_version)
+              ) as spss_sum_formulas_file:
+        master_json_data["SPSS_SUM_FORMULAS"] = json.load(
+            spss_sum_formulas_file)
+
+
 with open("./{0}/{1}/questions_{1}.txt"
           .format(QUESTIONS_BASE_PATH, questions_version)) as questions_file:
     for index, line in enumerate(questions_file):
@@ -201,6 +209,8 @@ with open("./{0}/{1}/master_frame_{1}.json"
     master_json_data["form"] = master_frame_json_data[
         :PREPENDING_QUESTIONS_IN_FRAME] + master_json_data[
         "form"] + master_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
+
+add_spss_sum_formula_info()
 
 with open("./{0}/{1}/master_{1}.json"
           .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
