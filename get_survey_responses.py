@@ -337,6 +337,13 @@ def generate_analysis_syntax():
                 append_frequency_formula(frequency_formula, primary_formulas,
                                          secondary_formulas)
 
+    if "means" in formulas:
+        for means_formula in formulas["means"]:
+            if "visited" not in means_formula:
+                means_formula["visited"] = True
+                append_means_formula(means_formula, primary_formulas,
+                                     secondary_formulas)
+
     formulas_string = "\n\n".join(primary_formulas) + "\n\n"
     formulas_string += "\n\n".join(secondary_formulas)
     return formulas_string
@@ -390,6 +397,12 @@ def append_frequency_formula(frequency_formula, primary_formulas,
                    secondary_formulas)
 
 
+def append_means_formula(means_formula, primary_formulas, secondary_formulas):
+    formula_string = generate_means_formula(means_formula["questions"])
+    append_formula(formula_string, means_formula["id"], primary_formulas,
+                   secondary_formulas)
+
+
 def append_formula(formula, formula_id, primary_formulas, secondary_formulas):
     if is_main_formula(formula_id):
         primary_formulas.append(formula)
@@ -429,6 +442,13 @@ def generate_frequency_formula(question_ids):
     frequency += "\n/HISTOGRAM NORMAL"
     frequency += "\n/ORDER=ANALYSIS."
     return frequency
+
+
+def generate_means_formula(question_ids):
+    means = "MEANS TABLES=\n"
+    means += "\n".join(question_ids)
+    means += "\n/CELLS MEAN COUNT STDDEV."
+    return means
 
 
 def save_analysis_syntax(syntax):
