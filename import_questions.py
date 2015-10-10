@@ -113,14 +113,6 @@ reverse_question_ids = [
                                                questions_version))]
 
 
-def add_spss_formula_info_to_background_questions(master_frame_json_data):
-    for entry in master_frame_json_data:
-        if "children" in entry:
-            for child_entry in entry["children"]:
-                if child_entry["id"].startswith("tt"):
-                    add_spss_formula_info(child_entry)
-
-
 def add_spss_formula_info(question):
     with open(("./{0}/{1}/spss_formulas_{1}.json")
               .format(QUESTIONS_BASE_PATH, questions_version)
@@ -206,7 +198,6 @@ with open("./{0}/{1}/master_frame_{1}.json"
           .format(QUESTIONS_BASE_PATH, questions_version)
           ) as master_frame_json_file:
     master_frame_json_data = json.load(master_frame_json_file)
-    add_spss_formula_info_to_background_questions(master_frame_json_data)
     # Two last questions go to the end of the survey.
     PREPENDING_QUESTIONS_IN_FRAME = len(master_frame_json_data) - 2
     master_json_data["form"] = master_frame_json_data[
