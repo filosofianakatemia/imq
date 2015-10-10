@@ -215,7 +215,7 @@ def validate_overlay_question_ids():
                         message = ("Kysymykselle {0} ei ole määritelty mitään "
                                    "seuraavista kentistä: DELETE_ID, "
                                    "BEFORE_ID, AFTER_ID, RENAME_ID".format(
-                                      question["id"]))
+                                       question["id"]))
                         invalid_overlay = True
                         break
                     elif (affect_id_type != "DELETE_ID" and
@@ -233,7 +233,7 @@ def validate_overlay_question_ids():
     return {
         "message": message,
         "error": invalid_overlay
-        }
+    }
 
 
 def get_affect_id_type(overlay_question):
