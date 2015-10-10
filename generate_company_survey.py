@@ -36,78 +36,31 @@ def read_json_file(json_file_path):
 
 
 def remove_question(question_id):
-    analysis_formula_references = []
     for entry in company_survey_json_data["form"]:
         if "children" in entry:
             # http://stackoverflow.com/a/16143537
             # http://stackoverflow.com/a/9755790
             for child_entry in entry["children"]:
                 if child_entry["id"] == question_id:
-                    print("poista\t{0}\t\"{1}\"\n".
+                    print("poista\t{0}\t\"{1}\"".
                           format(child_entry["id"],
                                  child_entry["title"]["fi"]))
-                    analysis_formula_references = child_entry[
-                        "SPSS_FORMULAS"]
                     entry["children"].remove(child_entry)
                     break
 
-    if analysis_formula_references:
-        remove_orphan_from_sum_formulas(analysis_formula_references)
     # Remove references from sum formulas.
-    remove_variable_from_sum_formulas(question_id)
+    remove_question_from_sum_formulas(question_id)
+    print("")
 
 
-def remove_orphan_from_sum_formulas(analysis_formula_references):
-    for reference_entry in analysis_formula_references:
-        if reference_entry["name"] == "average":
-            if "ids" in reference_entry:
-                for formula_reference in reference_entry["ids"]:
-                    reference_exists = False
-                    for entry in company_survey_json_data["form"]:
-                        if "children" in entry:
-                            for child_entry in entry["children"]:
-                                if "SPSS_FORMULAS" in child_entry:
-                                    for references_to_compare in child_entry["SPSS_FORMULAS"]:
-                                        if (formula_reference in
-                                                references_to_compare["ids"]):
-                                            # Reference is not orphan.
-                                            reference_exists = True
-                                            break
-
-                    if not reference_exists:
-                        # Reference is orphan.
-                        remove_variable_from_sum_formulas(formula_reference)
-            # Found what we needed, end the loop.
-            # Only the variables generated from average formula ids may be used
-            # in the sum forumulas, end the loop.
-            break
-
-
-def remove_variable_from_sum_formulas(variable_id):
+def remove_question_from_sum_formulas(variable_id):
     if "SPSS_SUM_FORMULAS" in company_survey_json_data:
-        removed_formula_id = None
         for formula_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
             if variable_id in formula_entry["children"]:
-                print("poista {0} kaavasta {1}".format(variable_id,
-                                                       formula_entry["id"]))
+                print(("Poista kysymys {0} kaavasta {1}")
+                      .format(variable_id, formula_entry["id"]))
                 # Remove variable from sum formula.
                 formula_entry["children"].remove(variable_id)
-                if not formula_entry["children"]:
-                    # NOTE: Question could - theoretically - be the only
-                    #       (remaining) child in the sum formula.
-                    #       In that case the formula is to be removed as well -
-                    #       and recursively check is the formula id used in
-                    #       remaining sum formulas.
-                    company_survey_json_data[
-                        "SPSS_SUM_FORMULAS"].remove(formula_entry)
-                    removed_formula_id = formula_entry["id"]
-                    break
-
-        if removed_formula_id:
-            print("Poista {} kaavoista".format(
-                  removed_formula_id))
-            # Recursively remove variable(s) from formulas
-            remove_variable_from_sum_formulas(removed_formula_id)
 
 
 def insert_question_before(id, question):
@@ -394,6 +347,102 @@ def merge_sum_formulas():
                     "SPSS_SUM_FORMULAS"].append(overlay_entry)
 
 
+def remove_orphan_sum_formulas():
+    removed_formula_id = None
+    for formula_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
+        remove_sum_formulas_without_references(
+            formula_entry["children"], formula_entry["id"])
+        if not formula_entry["children"]:
+            # NOTE: Question could - theoretically - be the only
+            #       (remaining) child in the sum formula.
+            #       In that case the formula is to be removed as well -
+            #       and recursively check is the formula id used in
+            #       remaining sum formulas.
+            company_survey_json_data[
+                "SPSS_SUM_FORMULAS"].remove(formula_entry)
+            removed_formula_id = formula_entry["id"]
+            break
+
+    if removed_formula_id:
+        print("Poista summamuuttuja {} kaavoista".format(removed_formula_id))
+        # Recursively remove variable(s) from formulas
+        remove_variable_from_sum_formulas(removed_formula_id)
+        remove_orphan_sum_formulas()
+
+
+def remove_variable_from_sum_formulas(variable_id):
+    removed_formula_id = None
+    for formula_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
+        if variable_id in formula_entry["children"]:
+            # Remove variable from sum formula.
+            print(("Poista muuttuja {0} kaavasta {1}")
+                  .format(variable_id, formula_entry["id"]))
+            formula_entry["children"].remove(variable_id)
+            if not formula_entry["children"]:
+                removed_formula_id = formula_entry["id"]
+                break
+
+    if removed_formula_id:
+        print("Poista {} kaavoista".format(
+              removed_formula_id))
+        # Recursively remove variable(s) from formulas
+        remove_orphan_sum_formulas()
+
+
+def remove_sum_formulas_without_references(sum_formula_references,
+                                           formula_name):
+    variables_to_remove = []
+    for reference in sum_formula_references:
+        is_reference = False
+        for entry in company_survey_json_data["form"]:
+            if reference_is_question(entry["children"], reference):
+                is_reference = True
+                break
+            if reference_is_sum_id(reference):
+                is_reference = True
+                break
+            if has_reference(entry, reference):
+                is_reference = True
+                break
+
+        if not is_reference and reference not in variables_to_remove:
+            variables_to_remove.append(reference)
+
+    if variables_to_remove:
+        for variable_to_remove in variables_to_remove:
+            print(("Poista summamuuttuja {0} kaavasta {1}")
+                  .format(variable_to_remove, formula_name))
+            sum_formula_references.remove(variable_to_remove)
+
+
+def has_reference(entry, reference):
+    if "children" in entry:
+        for child_entry in entry["children"]:
+            if "SPSS_FORMULAS" in child_entry:
+                for formula_reference in child_entry["SPSS_FORMULAS"]:
+                    if (formula_reference["name"] == "average" and
+                            reference in formula_reference["ids"]):
+                        # Found what we needed, end the loop.
+                        # Only the variables generated from average formula ids
+                        # may be used in the sum forumulas.
+                        return True
+    return False
+
+
+def reference_is_sum_id(reference):
+    for formula_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
+        if reference == formula_entry["id"]:
+            return True
+    return False
+
+
+def reference_is_question(survey_entries, reference):
+    for child_entry in survey_entries:
+        if child_entry["id"] == reference:
+            return True
+    return False
+
+
 def query_create_new_survey():
     return input("Lisää kysely FluidSurveysiin painamalla "
                  "\"k\": ").lower() == "k"
@@ -490,7 +539,12 @@ paginate_survey()
 company_frame_json_data = get_survey_frame()
 get_overlay_frame_and_merge_with_master()
 add_survey_frame()
+print("Lisätään analyysisyntaksin tiedot.")
 merge_sum_formulas()
+print("Analyysisyntaksin tiedot lisätty. Poistetaan syntaksin muuttujat, "
+      "joihin ei ole viitteitä")
+remove_orphan_sum_formulas()
+print("")
 
 # Uncomment for debugging.
 # print(json.dumps(company_frame_json_data, indent=4, ensure_ascii=False))
