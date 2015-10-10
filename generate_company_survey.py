@@ -89,7 +89,7 @@ def remove_variable_from_sum_formulas(variable_id):
         for formula_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
             if variable_id in formula_entry["children"]:
                 print("poista {0} kaavasta {1}".format(variable_id,
-                      formula_entry["id"]))
+                                                       formula_entry["id"]))
                 # Remove variable from sum formula.
                 formula_entry["children"].remove(variable_id)
                 if not formula_entry["children"]:
