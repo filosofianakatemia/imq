@@ -35,18 +35,79 @@ def read_json_file(json_file_path):
         return json.load(json_file)
 
 
-def remove_question(id):
+def remove_question(question_id):
+    analysis_formula_references = []
     for entry in company_survey_json_data["form"]:
         if "children" in entry:
             # http://stackoverflow.com/a/16143537
             # http://stackoverflow.com/a/9755790
             for child_entry in entry["children"]:
-                if child_entry["id"] == id:
+                if child_entry["id"] == question_id:
                     print("poista\t{0}\t\"{1}\"\n".
                           format(child_entry["id"],
                                  child_entry["title"]["fi"]))
+                    analysis_formula_references = child_entry[
+                        "SPSS_FORMULAS"]
                     entry["children"].remove(child_entry)
                     break
+
+    if analysis_formula_references:
+        remove_orphan_from_sum_formulas(analysis_formula_references)
+    # Remove references from sum formulas.
+    remove_variable_from_sum_formulas(question_id)
+
+
+def remove_orphan_from_sum_formulas(analysis_formula_references):
+    for reference_entry in analysis_formula_references:
+        if reference_entry["name"] == "average":
+            if "ids" in reference_entry:
+                for formula_reference in reference_entry["ids"]:
+                    reference_exists = False
+                    for entry in company_survey_json_data["form"]:
+                        if "children" in entry:
+                            for child_entry in entry["children"]:
+                                if "SPSS_FORMULAS" in child_entry:
+                                    for references_to_compare in child_entry["SPSS_FORMULAS"]:
+                                        if (formula_reference in
+                                                references_to_compare["ids"]):
+                                            # Reference is not orphan.
+                                            reference_exists = True
+                                            break
+
+                    if not reference_exists:
+                        # Reference is orphan.
+                        remove_variable_from_sum_formulas(formula_reference)
+            # Found what we needed, end the loop.
+            # Only the variables generated from average formula ids may be used
+            # in the sum forumulas, end the loop.
+            break
+
+
+def remove_variable_from_sum_formulas(variable_id):
+    if "SPSS_SUM_FORMULAS" in company_survey_json_data:
+        removed_formula_id = None
+        for formula_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
+            if variable_id in formula_entry["children"]:
+                print("poista {0} kaavasta {1}".format(variable_id,
+                      formula_entry["id"]))
+                # Remove variable from sum formula.
+                formula_entry["children"].remove(variable_id)
+                if not formula_entry["children"]:
+                    # NOTE: Question could - theoretically - be the only
+                    #       (remaining) child in the sum formula.
+                    #       In that case the formula is to be removed as well -
+                    #       and recursively check is the formula id used in
+                    #       remaining sum formulas.
+                    company_survey_json_data[
+                        "SPSS_SUM_FORMULAS"].remove(formula_entry)
+                    removed_formula_id = formula_entry["id"]
+                    break
+
+        if removed_formula_id:
+            print("Poista {} kaavoista".format(
+                  removed_formula_id))
+            # Recursively remove variable(s) from formulas
+            remove_variable_from_sum_formulas(removed_formula_id)
 
 
 def insert_question_before(id, question):
