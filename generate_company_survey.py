@@ -375,6 +375,25 @@ def add_survey_frame():
         "form"] + company_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
 
 
+def merge_sum_formulas():
+    if overlay_survey_json_data["SPSS_SUM_FORMULAS"]:
+        for overlay_entry in overlay_survey_json_data["SPSS_SUM_FORMULAS"]:
+            existing_entry = False
+            for sum_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
+                if overlay_entry["id"] == sum_entry["id"]:
+                    # append
+                    existing_entry = True
+                    # http://stackoverflow.com/a/3749835
+                    sum_entry["children"] = list(
+                        set(overlay_entry["children"] + sum_entry["children"]))
+                    overlay_entry["formulas"]
+                    break
+            if not existing_entry:
+                # add new
+                company_survey_json_data[
+                    "SPSS_SUM_FORMULAS"].append(overlay_entry)
+
+
 def query_create_new_survey():
     return input("Lisää kysely FluidSurveysiin painamalla "
                  "\"k\": ").lower() == "k"
@@ -471,6 +490,7 @@ paginate_survey()
 company_frame_json_data = get_survey_frame()
 get_overlay_frame_and_merge_with_master()
 add_survey_frame()
+merge_sum_formulas()
 
 # Uncomment for debugging.
 # print(json.dumps(company_frame_json_data, indent=4, ensure_ascii=False))
