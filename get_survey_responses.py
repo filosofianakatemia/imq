@@ -344,8 +344,27 @@ def generate_analysis_syntax():
                 append_means_formula(means_formula, primary_formulas,
                                      secondary_formulas)
 
+    if "SPSS_SUM_FORMULAS" in survey_json_data:
+        for formulas_entry in survey_json_data["SPSS_SUM_FORMULAS"]:
+            if "frequency" in formulas_entry["formulas"]:
+                formula_string = generate_frequency_formula(formulas_entry[
+                                                            "children"])
+                append_formula(formula_string, formulas_entry["id"],
+                               primary_formulas, secondary_formulas)
+            if "means" in formulas_entry["formulas"]:
+                formula_string = generate_means_formula(formulas_entry[
+                                                        "children"], True)
+                append_formula(formula_string, formulas_entry["id"],
+                               primary_formulas, secondary_formulas)
+            if "correlations" in formulas_entry["formulas"]:
+                formula_string = generate_correlations_formula(formulas_entry[
+                                                               "children"])
+                append_formula(formula_string, formulas_entry["id"],
+                               primary_formulas, secondary_formulas)
+
     formulas_string = "\n\n".join(primary_formulas) + "\n\n"
     formulas_string += "\n\n".join(secondary_formulas)
+
     return formulas_string
 
 
@@ -398,7 +417,7 @@ def append_frequency_formula(frequency_formula, primary_formulas,
 
 
 def append_means_formula(means_formula, primary_formulas, secondary_formulas):
-    formula_string = generate_means_formula(means_formula["questions"])
+    formula_string = generate_means_formula(means_formula["questions"], False)
     append_formula(formula_string, means_formula["id"], primary_formulas,
                    secondary_formulas)
 
@@ -444,11 +463,23 @@ def generate_frequency_formula(question_ids):
     return frequency
 
 
-def generate_means_formula(question_ids):
+def generate_means_formula(variable_ids, background_multiway):
     means = "MEANS TABLES=\n"
-    means += "\n".join(question_ids)
+    means += "\n".join(variable_ids)
+    if background_multiway:
+        # TODO: Use actual background questions.
+        means += "\nBY ikä aika_talossa henkilöstöryhmä"
     means += "\n/CELLS MEAN COUNT STDDEV."
     return means
+
+
+def generate_correlations_formula(variable_ids):
+    correlations = "CORRELATIONS"
+    correlations += "\n/VARIABLES=\n"
+    correlations += "\n".join(variable_ids)
+    correlations += "\n/PRINT=TWOTAIL NOSIG"
+    correlations += "\n/MISSING=PAIRWISE."
+    return correlations
 
 
 def save_analysis_syntax(syntax):
