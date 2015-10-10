@@ -391,7 +391,6 @@ def append_frequency_formula(frequency_formula, primary_formulas,
 
 
 def append_formula(formula, formula_id, primary_formulas, secondary_formulas):
-    print(formula)
     if is_main_formula(formula_id):
         primary_formulas.append(formula)
     else:
