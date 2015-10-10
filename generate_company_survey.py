@@ -171,17 +171,42 @@ def validate_overlay_question_ids():
                                        question["id"]))
                         invalid_overlay = True
                         break
-                    elif (affect_id_type != "DELETE_ID" and
-                          affect_id_type != "RENAME_ID" and
-                          question[affect_id_type] == question["id"]):
-                        message = ("Kysymyksen id {0} on sama kuin kysymyksen "
-                                   "kenttä {1}".format(question["id"],
-                                                       affect_id_type))
-                        invalid_overlay = True
-                        break
                     else:
-                        overlay_question_affect_ids.append(
-                            question[affect_id_type])
+                        if not has_affect_question(default_question_ids,
+                                                   question[affect_id_type]):
+                            message = ("Kysymyksen {0} kentän {1} arvo {2} ei "
+                                       "viittaa mihinkään olemassa olevaan "
+                                       "tai lisättävään kysymykseen").format(
+                                       question["id"], affect_id_type,
+                                       question[affect_id_type])
+                            invalid_overlay = True
+                        if (affect_id_type != "DELETE_ID" and
+                                affect_id_type != "RENAME_ID"):
+                            if question[affect_id_type] == question["id"]:
+                                message = ("Kysymyksen id {0} on sama kuin "
+                                           "kysymyksen kenttä {1}"
+                                           .format(question["id"],
+                                                   affect_id_type))
+                                invalid_overlay = True
+                                break
+                            elif is_question_to_be_removed(question[
+                                                           affect_id_type]):
+                                message = ("Kysymys {0} viittaa poistettavaan "
+                                           "kysymykseen {1}"
+                                           .format(question["id"],
+                                                   question[affect_id_type]))
+                                invalid_overlay = True
+                            elif duplicate_reference(question["id"],
+                                                     question[affect_id_type],
+                                                     affect_id_type):
+                                message = ("Kysymykseen {0} useampi kuin yksi "
+                                           "viittaus tyyppiä {1}").format(
+                                           question[affect_id_type],
+                                           affect_id_type)
+                                invalid_overlay = True
+                        else:
+                            overlay_question_affect_ids.append(
+                                question[affect_id_type])
 
     return {
         "message": message,
@@ -198,6 +223,39 @@ def get_affect_id_type(overlay_question):
         return "AFTER_ID"
     elif "RENAME_ID" in overlay_question:
         return "RENAME_ID"
+
+
+def has_affect_question(default_question_ids, affect_id):
+    has_affect_question = affect_id in default_question_ids
+    if not has_affect_question and "form" in overlay_survey_json_data:
+        for i in overlay_survey_json_data["form"]:
+            if "children" in i:
+                for question in i["children"]:
+                    if "id" in question and question["id"] == affect_id:
+                        has_affect_question = True
+                        break
+    return has_affect_question
+
+
+def duplicate_reference(question_id, affect_id, affect_id_type):
+    if "form" in overlay_survey_json_data:
+        for i in overlay_survey_json_data["form"]:
+            if "children" in i:
+                for question in i["children"]:
+                    if ("id" in question and question["id"] != question_id and
+                        affect_id_type in question and
+                            question[affect_id_type] == affect_id):
+                        return True
+
+
+def is_question_to_be_removed(question_id):
+    if "form" in overlay_survey_json_data:
+        for i in overlay_survey_json_data["form"]:
+            if "children" in i:
+                for question in i["children"]:
+                    if ("DELETE_ID" in question and
+                            question["DELETE_ID"] == question_id):
+                        return True
 
 
 def merge_overlay_questions():
