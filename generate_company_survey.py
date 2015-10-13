@@ -387,7 +387,7 @@ def add_survey_frame():
 
 
 def merge_sum_formulas():
-    if overlay_survey_json_data["SPSS_SUM_FORMULAS"]:
+    if "SPSS_SUM_FORMULAS" in overlay_survey_json_data:
         for overlay_entry in overlay_survey_json_data["SPSS_SUM_FORMULAS"]:
             existing_entry = False
             for sum_entry in company_survey_json_data["SPSS_SUM_FORMULAS"]:
