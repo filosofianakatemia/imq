@@ -474,8 +474,8 @@ def generate_means_formula(variable_ids, background_multiway):
     means = "MEANS TABLES=\n"
     means += "\n".join(variable_ids)
     if background_multiway:
-        # TODO: Use actual background questions.
-        means += "\nBY ikä aika_talossa henkilöstöryhmä"
+        # TODO: Use actual existing background questions of tt1, tt2, tt3.
+        means += "\nBY tt1 tt2 tt3"
     means += "\n/CELLS MEAN COUNT STDDEV."
     return means
 
