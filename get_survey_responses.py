@@ -346,6 +346,13 @@ def generate_analysis_syntax():
 
     if "SPSS_SUM_FORMULAS" in survey_json_data:
         for formulas_entry in survey_json_data["SPSS_SUM_FORMULAS"]:
+            if "average" in formulas_entry["formulas"]:
+                formula_string = generate_average_formula(formulas_entry["id"],
+                                                          formulas_entry[
+                                                          "children"])
+                append_formula(formula_string, formulas_entry["id"],
+                               primary_formulas, secondary_formulas)
+        for formulas_entry in survey_json_data["SPSS_SUM_FORMULAS"]:
             if "frequency" in formulas_entry["formulas"]:
                 formula_string = generate_frequency_formula(formulas_entry[
                                                             "children"])
