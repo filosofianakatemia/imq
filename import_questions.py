@@ -198,8 +198,8 @@ with open("./{0}/{1}/master_frame_{1}.json"
           .format(QUESTIONS_BASE_PATH, questions_version)
           ) as master_frame_json_file:
     master_frame_json_data = json.load(master_frame_json_file)
-    # Two last questions go to the end of the survey.
-    PREPENDING_QUESTIONS_IN_FRAME = len(master_frame_json_data) - 2
+    # Last question go to the end of the survey.
+    PREPENDING_QUESTIONS_IN_FRAME = len(master_frame_json_data) - 1
     master_json_data["form"] = master_frame_json_data[
         :PREPENDING_QUESTIONS_IN_FRAME] + master_json_data[
         "form"] + master_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]

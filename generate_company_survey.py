@@ -379,8 +379,8 @@ def get_overlay_frame_and_merge_with_master():
 
 
 def add_survey_frame():
-    # Add survey frame. Last two questions goes to the end of the survey.
-    PREPENDING_QUESTIONS_IN_FRAME = len(company_frame_json_data) - 2
+    # Add survey frame. Last question goes to the end of the survey.
+    PREPENDING_QUESTIONS_IN_FRAME = len(company_frame_json_data) - 1
     company_survey_json_data["form"] = company_frame_json_data[
         :PREPENDING_QUESTIONS_IN_FRAME] + company_survey_json_data[
         "form"] + company_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
