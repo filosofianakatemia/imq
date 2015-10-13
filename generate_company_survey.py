@@ -122,6 +122,16 @@ def insert_frame_question_after(id, question):
                     break
 
 
+def delete_frame_question(question_id):
+    for entry in company_frame_json_data:
+        if "children" in entry:
+            for index, child_entry in enumerate(entry["children"]):
+                if child_entry["id"] == question_id:
+                    print(("poista\t{0}\t\"{1}\"\n")
+                          .format(child_entry["id"],
+                                  child_entry["title"]["fi"]))
+
+
 def validate_overlay_question_ids():
     # add default question ids to list
     overlay_question_ids = []
@@ -177,8 +187,8 @@ def validate_overlay_question_ids():
                             message = ("Kysymyksen {0} kentän {1} arvo {2} ei "
                                        "viittaa mihinkään olemassa olevaan "
                                        "tai lisättävään kysymykseen").format(
-                                       question["id"], affect_id_type,
-                                       question[affect_id_type])
+                                question["id"], affect_id_type,
+                                question[affect_id_type])
                             invalid_overlay = True
                         if (affect_id_type != "DELETE_ID" and
                                 affect_id_type != "RENAME_ID"):
@@ -201,8 +211,8 @@ def validate_overlay_question_ids():
                                                      affect_id_type):
                                 message = ("Kysymykseen {0} useampi kuin yksi "
                                            "viittaus tyyppiä {1}").format(
-                                           question[affect_id_type],
-                                           affect_id_type)
+                                    question[affect_id_type],
+                                    affect_id_type)
                                 invalid_overlay = True
                         else:
                             overlay_question_affect_ids.append(
@@ -370,7 +380,7 @@ def get_overlay_frame_and_merge_with_master():
             if "children" in entry:
                 for child_entry in entry["children"]:
                     if "DELETE_ID" in child_entry:
-                        print("delete")
+                        delete_frame_question(child_entry["DELETE_ID"])
                     elif "BEFORE_ID" in child_entry:
                         print("before")
                     elif "AFTER_ID" in child_entry:
