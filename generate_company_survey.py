@@ -122,7 +122,7 @@ def insert_frame_question_after(id, question):
                     break
 
 
-def delete_frame_question(question_id):
+def remove_frame_question(question_id):
     for entry in company_frame_json_data:
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
@@ -130,6 +130,28 @@ def delete_frame_question(question_id):
                     print(("poista\t{0}\t\"{1}\"\n")
                           .format(child_entry["id"],
                                   child_entry["title"]["fi"]))
+                    entry["children"].remove(child_entry)
+
+
+def rename_frame_question(question_id, question):
+    for entry in company_frame_json_data:
+        if "children" in entry:
+            for index, child_entry in enumerate(entry["children"]):
+                if child_entry["id"] == question_id:
+                    if "title" in question:
+                        print("nimettiin\t{0}\t\"{1}\"\n"
+                              "uudelleen\t\t\"{2}\""
+                              .format(child_entry["id"],
+                                      child_entry["title"]["fi"],
+                                      question["title"]["fi"]))
+                        child_entry["title"] = question["title"]
+                    if "description" in question:
+                        print("nimettiin kysymyksen\t{0}\t\"{1}\"\n"
+                              "sisältö uudelleen"
+                              .format(child_entry["id"],
+                                      child_entry["title"]["fi"]))
+                        child_entry["description"] = question["description"]
+                    break
 
 
 def validate_overlay_question_ids():
@@ -380,12 +402,15 @@ def get_overlay_frame_and_merge_with_master():
             if "children" in entry:
                 for child_entry in entry["children"]:
                     if "DELETE_ID" in child_entry:
-                        delete_frame_question(child_entry["DELETE_ID"])
+                        remove_frame_question(child_entry["DELETE_ID"])
                     elif "BEFORE_ID" in child_entry:
                         print("before")
                     elif "AFTER_ID" in child_entry:
                         insert_frame_question_after(child_entry["AFTER_ID"],
                                                     child_entry)
+                    elif "RENAME_ID" in child_entry:
+                        rename_frame_question(child_entry["RENAME_ID"],
+                                              child_entry)
 
 
 def add_survey_frame():
