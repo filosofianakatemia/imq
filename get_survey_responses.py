@@ -472,10 +472,10 @@ def generate_frequency_formula(question_ids, sum_formula):
     return frequency
 
 
-def generate_means_formula(variable_ids, background_multiway):
+def generate_means_formula(variable_ids, sum_formula):
     means = "MEANS TABLES=\n"
     means += "\n".join(variable_ids)
-    if background_multiway:
+    if sum_formula:
         # TODO: Use actual existing background questions of tt1, tt2, tt3.
         means += "\nBY tt1 tt2 tt3"
     means += "\n/CELLS MEAN COUNT STDDEV."
