@@ -458,6 +458,7 @@ def remove_orphan_sum_formulas():
 
     if removed_formula_id:
         print("Poista summamuuttuja {} kaavoista".format(removed_formula_id))
+        remove_formula_order(removed_formula_id)
         # Recursively remove variable(s) from formulas
         remove_variable_from_sum_formulas(removed_formula_id)
         remove_orphan_sum_formulas()
@@ -506,6 +507,15 @@ def remove_sum_formulas_without_references(sum_formula_references,
             print(("Poista summamuuttuja {0} kaavasta {1}")
                   .format(variable_to_remove, formula_name))
             sum_formula_references.remove(variable_to_remove)
+            remove_formula_order(variable_to_remove)
+
+
+def remove_formula_order(formula_id):
+    if "SPSS_FORMULAS_ORDER" in company_survey_json_data:
+        # http://stackoverflow.com/a/1207427
+        for formula in company_survey_json_data["SPSS_FORMULAS_ORDER"][:]:
+            if formula["id"] == formula_id:
+                company_survey_json_data["SPSS_FORMULAS_ORDER"].remove(formula)
 
 
 def has_reference(entry, reference):
