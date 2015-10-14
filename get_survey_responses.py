@@ -355,7 +355,7 @@ def generate_analysis_syntax():
         for formulas_entry in survey_json_data["SPSS_SUM_FORMULAS"]:
             if "frequency" in formulas_entry["formulas"]:
                 formula_string = generate_frequency_formula(formulas_entry[
-                                                            "children"])
+                                                            "children"], True)
                 append_formula(formula_string, formulas_entry["id"],
                                primary_formulas, secondary_formulas)
             if "means" in formulas_entry["formulas"]:
@@ -418,7 +418,8 @@ def append_reliability_formula(reliability_formula, primary_formulas,
 
 def append_frequency_formula(frequency_formula, primary_formulas,
                              secondary_formulas):
-    formula_string = generate_frequency_formula(frequency_formula["questions"])
+    formula_string = generate_frequency_formula(frequency_formula["questions"],
+                                                False)
     append_formula(formula_string, frequency_formula["id"], primary_formulas,
                    secondary_formulas)
 
@@ -459,13 +460,14 @@ def generate_reliability_formula(formula_id, question_ids):
     return reliability
 
 
-def generate_frequency_formula(question_ids):
+def generate_frequency_formula(question_ids, sum_formula):
     frequency = "FREQUENCIES"
     frequency += "\n/VARIABLES=\n"
     frequency += "\n".join(question_ids)
-    frequency += "\n/NTILES=4"
-    frequency += "\n/STATISTICS=STDDEV MEAN"
-    frequency += "\n/HISTOGRAM NORMAL"
+    if sum_formula:
+        frequency += "\n/NTILES=4"
+        frequency += "\n/STATISTICS=STDDEV MEAN"
+        frequency += "\n/HISTOGRAM NORMAL"
     frequency += "\n/ORDER=ANALYSIS."
     return frequency
 
