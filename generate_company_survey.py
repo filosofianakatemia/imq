@@ -432,7 +432,8 @@ def merge_sum_formulas():
                     # http://stackoverflow.com/a/3749835
                     sum_entry["children"] = list(
                         set(overlay_entry["children"] + sum_entry["children"]))
-                    overlay_entry["formulas"]
+                    sum_entry["formulas"] = list(
+                        set(overlay_entry["formulas"] + sum_entry["formulas"]))
                     break
             if not existing_entry:
                 # add new
