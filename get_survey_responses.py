@@ -299,7 +299,7 @@ def rename_dataset():
     return "DATASET NAME {0}_{1}.".format("dataset", time.strftime('%Y%m%d'))
 
 
-def generate_analysis_syntax():
+def generate_analysis_syntax(question_ids):
     formulas = generate_analysis_formulas_map()
     # Main parameters first
     primary_formulas = []
@@ -342,7 +342,7 @@ def generate_analysis_syntax():
             if "visited" not in means_formula:
                 means_formula["visited"] = True
                 append_means_formula(means_formula, primary_formulas,
-                                     secondary_formulas)
+                                     secondary_formulas, question_ids)
 
     if "SPSS_SUM_FORMULAS" in survey_json_data:
         for formulas_entry in survey_json_data["SPSS_SUM_FORMULAS"]:
@@ -360,7 +360,8 @@ def generate_analysis_syntax():
                                primary_formulas, secondary_formulas)
             if "means" in formulas_entry["formulas"]:
                 formula_string = generate_means_formula(formulas_entry[
-                                                        "children"], True)
+                                                        "children"], True,
+                                                        question_ids)
                 append_formula(formula_string, formulas_entry["id"],
                                primary_formulas, secondary_formulas)
             if "correlations" in formulas_entry["formulas"]:
@@ -424,8 +425,10 @@ def append_frequency_formula(frequency_formula, primary_formulas,
                    secondary_formulas)
 
 
-def append_means_formula(means_formula, primary_formulas, secondary_formulas):
-    formula_string = generate_means_formula(means_formula["questions"], False)
+def append_means_formula(means_formula, primary_formulas, secondary_formulas,
+                         question_ids):
+    formula_string = generate_means_formula(means_formula["questions"], False,
+                                            question_ids)
     append_formula(formula_string, means_formula["id"], primary_formulas,
                    secondary_formulas)
 
@@ -472,12 +475,20 @@ def generate_frequency_formula(question_ids, sum_formula):
     return frequency
 
 
-def generate_means_formula(variable_ids, sum_formula):
+def generate_means_formula(variable_ids, sum_formula, question_ids):
     means = "MEANS TABLES=\n"
     means += "\n".join(variable_ids)
-    if sum_formula:
-        # TODO: Use actual existing background questions of tt1, tt2, tt3.
-        means += "\nBY tt1 tt2 tt3"
+    if (sum_formula and
+            ("tt1" in question_ids or
+             "tt2" in question_ids or
+             "tt3" in question_ids)):
+        means += "\nBY"
+        if "tt1" in question_ids:
+            means += " tt1"
+        if "tt2" in question_ids:
+            means += " tt2"
+        if "tt3" in question_ids:
+            means += " tt3"
     means += "\n/CELLS MEAN COUNT STDDEV."
     return means
 
@@ -520,7 +531,8 @@ if get_survey_response.status_code == 200:
     generate_prepare_data_spss_syntax(response_data["spss_question_ids"])
     print("Dataa valmisteleva syntaksitiedosto luotu.")
     print("Luodaan analyysin syntaksitiedosto.")
-    analysis_syntax = generate_analysis_syntax()
+    analysis_syntax = generate_analysis_syntax(response_data[
+                                               "spss_question_ids"])
     save_analysis_syntax(analysis_syntax)
     print("Analyysin syntaksitiedosto luotu.")
     print("Vastausten hakeminen valmis. Tiedostot luotu kansioon "
