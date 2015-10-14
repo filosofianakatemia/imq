@@ -226,7 +226,3 @@ with open("./{0}/{1}/master_flattened_{1}.json"
           .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
     json.dump(master_json_data_flattened, outfile, indent=2,
               ensure_ascii=False)
-
-with open("./{0}/{1}/master_frame_{1}.json"
-          .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
-    json.dump(master_frame_json_data, outfile, indent=2, ensure_ascii=False)
