@@ -152,6 +152,17 @@ def add_spss_sum_formula_info():
             "SPSS_SUM_FORMULAS"] = spss_sum_formulas_json_data
 
 
+def add_spss_formulas_order_info():
+    with open(("./{0}/{1}/spss_formulas_order_{1}.json")
+              .format(QUESTIONS_BASE_PATH, questions_version)
+              ) as spss_formulas_order_file:
+        spss_formulas_order_json_data = json.load(
+            spss_formulas_order_file)
+        master_json_data["SPSS_FORMULAS_ORDER"] = spss_formulas_order_json_data
+        master_json_data_flattened[
+            "SPSS_FORMULAS_ORDER"] = spss_formulas_order_json_data
+
+
 with open("./{0}/{1}/questions_{1}.txt"
           .format(QUESTIONS_BASE_PATH, questions_version)) as questions_file:
     for index, line in enumerate(questions_file):
@@ -205,6 +216,7 @@ with open("./{0}/{1}/master_frame_{1}.json"
         "form"] + master_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
 
 add_spss_sum_formula_info()
+add_spss_formulas_order_info()
 
 with open("./{0}/{1}/master_{1}.json"
           .format(QUESTIONS_BASE_PATH, questions_version), "w") as outfile:
