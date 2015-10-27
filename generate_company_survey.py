@@ -30,7 +30,7 @@ single_choise_grid_description = {
 
 
 def read_json_file(json_file_path):
-    with open(json_file_path) as json_file:
+    with open(json_file_path, encoding="utf8") as json_file:
         # TODO: check that file has content.
         return json.load(json_file)
 
