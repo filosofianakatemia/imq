@@ -72,3 +72,12 @@
 .fs-chrome input[type="submit"].button:hover {
   color: #027180;
 }
+
+/*
+* Movo logo up a bit
+*/
+
+.fs-chrome .survey-logo{
+  bottom: 35px !important;
+}
+
