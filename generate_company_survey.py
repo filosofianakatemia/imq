@@ -307,7 +307,7 @@ def merge_overlay_questions():
 
 
 def paginate_survey():
-    QUESTIONS_IN_PAGE = 10
+    QUESTIONS_IN_PAGE = 11
     for index, entry in enumerate(company_survey_json_data["form"]):
 
         single_choise_grid_description_copy = copy.deepcopy(
