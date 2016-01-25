@@ -104,6 +104,8 @@ def rename_question(id, question):
                                   child_entry["title"]["fi"],
                                   question["title"]["fi"]))
                     child_entry["title"] = question["title"]
+                    if "description" in question:
+                        child_entry["description"] = question["description"]
                     break
 
 
