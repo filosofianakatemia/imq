@@ -17,8 +17,8 @@ question_page = {
 
 single_choise_grid_description = {
     "description": {
-        "fi": "1: Ei lainkaan, 2: Melko vähän, " +
-        "3: Vähän, 4: Jossain määrin, 5: Melko hyvin, " +
+        "fi": "1: Ei lainkaan, 2: Huonosti, " +
+        "3: Melko huonosti, 4: Jossain määrin, 5: Melko hyvin, " +
         "6: Hyvin, 7: Erittäin hyvin"
     },
     "idname": "section-separator",
