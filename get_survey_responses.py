@@ -272,13 +272,14 @@ def generate_response_files():
 
 def generate_prepare_data_spss_syntax(question_ids):
     measurement_level = set_question_measurement_level_to_scale(question_ids)
+    question_labels = set_question_labels(question_ids)
     dataset_name = rename_dataset()
 
     with open("./{0}/{1}/{2}/{3}/prepare_data.sps"
               .format(SURVEY_DATA_BASE_PATH, company_name, survey_name,
                       TIMESTAMP),
               "wt") as out_file:
-        out_file.write(measurement_level + dataset_name)
+        out_file.write(measurement_level + question_labels + dataset_name)
 
 
 def set_question_measurement_level_to_scale(question_ids):
@@ -292,6 +293,29 @@ def set_question_measurement_level_to_scale(question_ids):
     measurement_level += ".\n"
 
     return measurement_level
+
+def set_question_labels(question_ids):
+    labels = "VARIABLE LABELS\n"
+
+    for question_id in question_ids:
+        labels += ("{} '{}'\n".format(question_id, get_title_for_question(question_id)))
+    labels += ".\n"
+    return labels
+
+
+def get_title_for_question(question_id):
+    # Resort to using the question_id as title if not found
+    title = question_id
+    for entry in survey_json_data["form"]:
+        if "children" in entry:
+            for child_entry in entry["children"]:
+                if child_entry["id"] == question_id and "title" in child_entry:
+                    if "fi" in child_entry["title"]:
+                        title = child_entry["title"]["fi"]
+                    elif "en" in child_entry["title"]:
+                        title = child_entry["title"]["en"]
+                    break
+    return title
 
 
 def rename_dataset():
