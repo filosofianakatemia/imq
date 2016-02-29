@@ -23,7 +23,7 @@ single_choise_grid_description = {
     },
     "idname": "section-separator",
     "title": {
-        "fi": "Arvioi seuraavien väittämien paikkansapitävyyttä työssäsi"
+        "fi": "Arvioi, miten hyvin seuraavat väitteet pitävät paikkansa työssäsi."
     },
     "type": "question"
 }
