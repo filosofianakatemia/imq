@@ -5,13 +5,12 @@ import sys
 import re
 import requests
 import time
+from datetime import datetime
 import query_info
 
 SURVEY_DATA_BASE_PATH = "data"
 QUESTIONS_BASE_PATH = "kysymykset"
-# http://stackoverflow.com/a/5998359
-TIMESTAMP = int(round(time.time() * 1000))
-
+TIMESTAMP = datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")
 
 def get_company_name_and_survey_name():
     survey_info = {}
@@ -112,6 +111,10 @@ def is_survey_question(response_variable):
         key_to_compare = key_to_compare[1:]
     if key_to_compare.endswith("}"):
         key_to_compare = key_to_compare[:-1]
+
+    # ID field needs to be added to spss responses
+    if key_to_compare == "_id":
+        return True
 
     if "avoin" in key_to_compare:
         pass
@@ -243,6 +246,8 @@ def generate_response_files():
                             key = column
 
                             if key.startswith("{"):
+                                key = key[1:]
+                            if key.startswith("_"):
                                 key = key[1:]
                             if key.endswith("}"):
                                 key = key[:-1]
