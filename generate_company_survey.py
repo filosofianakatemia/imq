@@ -134,6 +134,12 @@ def remove_frame_question(question_id):
                                   child_entry["title"]["fi"]))
                     entry["children"].remove(child_entry)
 
+def remove_frame_empty_pages():
+    for entry in company_frame_json_data:
+        if not "children" in entry or not entry["children"]:
+            print("poistetaan tyhjä sivu")
+            company_frame_json_data.remove(entry)
+
 
 def rename_frame_question(question_id, question):
     for entry in company_frame_json_data:
@@ -307,7 +313,6 @@ def merge_overlay_questions():
                     elif "RENAME_ID" in j:
                         rename_question(j["RENAME_ID"], j)
 
-
 def paginate_survey():
     QUESTIONS_IN_PAGE = 11
     for index, entry in enumerate(company_survey_json_data["form"]):
@@ -413,7 +418,8 @@ def get_overlay_frame_and_merge_with_master():
                     elif "RENAME_ID" in child_entry:
                         rename_frame_question(child_entry["RENAME_ID"],
                                               child_entry)
-
+        # If the page does not have any children anymore, remove entire page
+        remove_frame_empty_pages()
 
 def add_survey_frame():
     # Add survey frame. Last question goes to the end of the survey.
