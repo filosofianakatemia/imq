@@ -8,12 +8,10 @@ import query_info
 get_list_surveys_url = "https://fluidsurveys.com/api/v3/surveys/?page_size=100"
 surveys = []
 
-
 def get_surveys_and_print():
     surveys = get_surveys()
     for survey in surveys:
         print("{0}\t{1}".format(survey["id"], survey["name"]))
-
 
 def get_surveys(*args, **kwargs):
     email = kwargs.get("email", None)
@@ -27,20 +25,14 @@ def get_surveys(*args, **kwargs):
     list_surveys(get_list_surveys_url, email, password, headers)
     return surveys
 
-
 def list_surveys(url, email, password, headers):
     list_surveys_response = get_list_surveys(url, email, password, headers)
     handle_list_surveys_response(list_surveys_response)
-    if has_next(list_surveys_response):
-        count = json.loads(list_surveys_response.text)
-        list_surveys(count["next"])
     return
-
 
 def get_list_surveys(url, email, password, headers):
     response = requests.get(url, auth=(email, password), headers=headers)
     return response
-
 
 def handle_list_surveys_response(surveys_response):
     if surveys_response.status_code == 200:
@@ -52,9 +44,3 @@ def handle_list_surveys_response(surveys_response):
     else:
         print("Request failed {0}".format(surveys_response.status_code))
     return surveys
-
-
-def has_next(response):
-    count = json.loads(response.text)
-    if count["next"]:
-        return True

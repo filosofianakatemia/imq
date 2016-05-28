@@ -18,16 +18,19 @@ question_page = {
 single_choise_grid_description = {
     "description": {
         "fi": "1: Ei lainkaan, 2: Huonosti, " +
-        "3: Melko huonosti, 4: Jossain määrin, 5: Melko hyvin, " +
-        "6: Hyvin, 7: Erittäin hyvin"
+              "3: Melko huonosti, 4: Jossain määrin, 5: Melko hyvin, " +
+              "6: Hyvin, 7: Erittäin hyvin",
+        "en": "1: Not at all, 2: Poorly, " +
+              "3: Somewhat poorly, 4: To some extent, 5: Pretty well, " +
+              "6: Well, 7: Very well"
     },
     "idname": "section-separator",
     "title": {
-        "fi": "Arvioi, miten hyvin seuraavat väitteet pitävät paikkansa työssäsi."
+        "fi": "Arvioi, miten hyvin seuraavat väitteet pitävät paikkansa työssäsi.",
+        "en": "Rate how well the following statements are reflected in your job."
     },
     "type": "question"
 }
-
 
 def read_json_file(json_file_path):
     with open(json_file_path, encoding="utf8") as json_file:
@@ -621,6 +624,8 @@ company_survey_json_data = get_flattened_questions()
 # Update main attributes.
 company_survey_json_data["name"] = overlay_survey_json_data["name"]
 company_survey_json_data["title"] = overlay_survey_json_data["name"]
+if "languages" in overlay_survey_json_data:
+    company_survey_json_data["languages"] = overlay_survey_json_data["languages"]
 company_survey_json_data["IMQ_VERSION"] = company_survey_json_data["version"]
 if not overlay_survey_json_data["live"]:
     company_survey_json_data["live"] = 0

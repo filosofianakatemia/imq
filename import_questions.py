@@ -3,6 +3,7 @@ import json
 import math
 import sys
 import uuid
+import csv
 
 QUESTIONS_BASE_PATH = "kysymykset"
 
@@ -19,12 +20,16 @@ question_page = {
 single_choise_grid_description = {
     "description": {
         "fi": "1: Ei lainkaan, 2: Huonosti, " +
-        "3: Melko huonosti, 4: Jossain määrin, 5: Melko hyvin, " +
-        "6: Hyvin, 7: Erittäin hyvin"
+              "3: Melko huonosti, 4: Jossain määrin, 5: Melko hyvin, " +
+              "6: Hyvin, 7: Erittäin hyvin",
+        "en": "1: Not at all, 2: Poorly, " +
+              "3: Somewhat poorly, 4: To some extent, 5: Pretty well, " +
+              "6: Well, 7: Very well"
     },
     "idname": "section-separator",
     "title": {
-        "fi": "Arvioi, miten hyvin seuraavat väitteet pitävät paikkansa työssäsi."
+        "fi": "Arvioi, miten hyvin seuraavat väitteet pitävät paikkansa työssäsi.",
+        "en": "Rate how well the following statements are reflected in your job."
     },
     "type": "question"
 }
@@ -32,7 +37,8 @@ single_choise_grid_description = {
 single_choise_grid = {
     "idname": "single-choice-grid",
     "title": {
-        "fi": ""
+        "fi": "",
+        "en": ""
     },
     "children": [
         {
@@ -79,7 +85,10 @@ text_response = {
 }
 
 master_json_data = {
-    "title": "IMQ Kysymyspatteristo {}".format(questions_version),
+    "title": {
+        "fi": "IMQ Kysymyspatteristo {}".format(questions_version),
+        "en": "IMQ Questions {}".format(questions_version)
+    },
     "version": questions_version,
     "form": [],
     "languages": [
@@ -87,13 +96,20 @@ master_json_data = {
             "code": "fi",
             "isDefault": True,
             "name": "Finnish"
+        },
+        {
+            "code": "en",
+            "isDefault": False,
+            "name": "English"
         }
     ]
 }
 
 master_json_data_flattened = {
-    "title": "IMQ Kysymyspatteristo {}".format(questions_version),
-    "version": questions_version,
+    "title": {
+        "fi": "IMQ Kysymyspatteristo {}".format(questions_version),
+        "en": "IMQ Questions {}".format(questions_version)
+    },    "version": questions_version,
     "form": [{
         "children": [],
         "type": "page"
@@ -103,6 +119,11 @@ master_json_data_flattened = {
             "code": "fi",
             "isDefault": True,
             "name": "Finnish"
+        },
+        {
+            "code": "en",
+            "isDefault": False,
+            "name": "English"
         }
     ]
 }
@@ -163,19 +184,22 @@ def add_spss_formulas_order_info():
             "SPSS_FORMULAS_ORDER"] = spss_formulas_order_json_data
 
 
-with open("./{0}/{1}/questions_{1}.txt"
+with open("./{0}/{1}/questions_{1}.csv"
           .format(QUESTIONS_BASE_PATH, questions_version)) as questions_file:
-    for index, line in enumerate(questions_file):
-        question_id = line[:12].strip()
-        title = line[12:].strip()
+    csv_file = csv.reader(questions_file, delimiter=';')
+
+    for index, row in enumerate(csv_file):
+        question_id = row[0]
+        title_fi = row[1]
+        title_en = row[2]
 
         if "avoin" in question_id:
             question = copy.deepcopy(text_response)
         else:
             question = copy.deepcopy(single_choise_grid)
-            title += "."  # Add dot to the end of the question.
 
-        question["title"]["fi"] = title
+        question["title"]["fi"] = title_fi
+        question["title"]["en"] = title_en
         question["id"] = question_id
 
         if question_id in reverse_question_ids:
