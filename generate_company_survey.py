@@ -15,7 +15,7 @@ question_page = {
     "type": "page"
 }
 
-single_choise_grid_description = {
+single_choice_grid_description = {
     "description": {
         "fi": "1: Ei lainkaan, 2: Huonosti, " +
               "3: Melko huonosti, 4: Jossain määrin, 5: Melko hyvin, " +
@@ -45,9 +45,10 @@ def remove_question(question_id):
             # http://stackoverflow.com/a/9755790
             for child_entry in entry["children"]:
                 if child_entry["id"] == question_id:
+                    child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     print("poista\t{0}\t\"{1}\"".
                           format(child_entry["id"],
-                                 child_entry["title"]["fi"]))
+                                 child_entry_title))
                     entry["children"].remove(child_entry)
                     break
 
@@ -71,11 +72,13 @@ def insert_question_before(id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == id:
+                    question_title = question["title"]["fi"] if "fi" in question["title"] else question["title"]["en"]
+                    child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     print("lisää\t{0}\t\"{1}\"\n"
                           "ennen\t{2}\t\"{3}\"\n"
                           "indeksi\t{4}\n".
-                          format(question["id"], question["title"]["fi"],
-                                 child_entry["id"], child_entry["title"]["fi"],
+                          format(question["id"], question_title,
+                                 child_entry["id"], child_entry_title,
                                  index))
                     entry["children"].insert(index, question)
                     break
@@ -86,11 +89,13 @@ def insert_question_after(id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == id:
+                    question_title = question["title"]["fi"] if "fi" in question["title"] else question["title"]["en"]
+                    child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     print("lisää\t{0}\t\"{1}\"\n"
                           "jälkeen\t{2}\t\"{3}\"\n"
                           "indeksi\t{4}\n".
-                          format(question["id"], question["title"]["fi"],
-                                 child_entry["id"], child_entry["title"]["fi"],
+                          format(question["id"], question_title,
+                                 child_entry["id"], child_entry_title,
                                  index + 1))
                     entry["children"].insert(index + 1, question)
                     break
@@ -101,11 +106,13 @@ def rename_question(id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == id:
+                    question_title = question["title"]["fi"] if "fi" in question["title"] else question["title"]["en"]
+                    child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     print("nimettiin\t{0}\t\"{1}\"\n"
                           "uudelleen\t\t\"{2}\""
                           .format(child_entry["id"],
-                                  child_entry["title"]["fi"],
-                                  question["title"]["fi"]))
+                                  child_entry_title,
+                                  question_title))
                     child_entry["title"] = question["title"]
                     if "description" in question:
                         child_entry["description"] = question["description"]
@@ -117,11 +124,13 @@ def insert_frame_question_after(id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == id:
+                    question_title = question["title"]["fi"] if "fi" in question["title"] else question["title"]["en"]
+                    child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     print("lisää\t{0}\t\"{1}\"\n"
                           "jälkeen\t{2}\t\"{3}\"\n"
                           "indeksi\t{4}\n".
-                          format(question["id"], question["title"]["fi"],
-                                 child_entry["id"], child_entry["title"]["fi"],
+                          format(question["id"], question_title,
+                                 child_entry["id"], child_entry_title,
                                  index + 1))
                     entry["children"].insert(index + 1, question)
                     break
@@ -132,9 +141,10 @@ def remove_frame_question(question_id):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == question_id:
+                    child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     print(("poista\t{0}\t\"{1}\"\n")
                           .format(child_entry["id"],
-                                  child_entry["title"]["fi"]))
+                                  child_entry_title))
                     entry["children"].remove(child_entry)
 
 def remove_frame_empty_pages():
@@ -149,18 +159,20 @@ def rename_frame_question(question_id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == question_id:
+                    question_title = question["title"]["fi"] if "fi" in question["title"] else question["title"]["en"]
+                    child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     if "title" in question:
                         print("nimettiin\t{0}\t\"{1}\"\n"
                               "uudelleen\t\t\"{2}\""
                               .format(child_entry["id"],
-                                      child_entry["title"]["fi"],
-                                      question["title"]["fi"]))
+                                      child_entry_title,
+                                      question_title))
                         child_entry["title"] = question["title"]
                     if "description" in question:
                         print("nimettiin kysymyksen\t{0}\t\"{1}\"\n"
                               "sisältö uudelleen"
                               .format(child_entry["id"],
-                                      child_entry["title"]["fi"]))
+                                      child_entry_title))
                         child_entry["description"] = question["description"]
                     break
 
@@ -320,11 +332,11 @@ def paginate_survey():
     QUESTIONS_IN_PAGE = 11
     for index, entry in enumerate(company_survey_json_data["form"]):
 
-        single_choise_grid_description_copy = copy.deepcopy(
-            single_choise_grid_description)
-        single_choise_grid_description_copy["id"] = str(uuid.uuid1())
+        single_choice_grid_description_copy = copy.deepcopy(
+            single_choice_grid_description)
+        single_choice_grid_description_copy["id"] = str(uuid.uuid1())
         company_survey_json_data["form"][index]["children"].insert(
-            0, single_choise_grid_description_copy)
+            0, single_choice_grid_description_copy)
 
         if "children" in entry and len(entry["children"]) > QUESTIONS_IN_PAGE:
             question_page_copy = copy.deepcopy(question_page)
@@ -409,7 +421,12 @@ def get_overlay_frame_and_merge_with_master():
         overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
 
         for entry in overlay_frame_json_data:
-            if "children" in entry:
+            if "type" in entry and entry["type"] == "page" and "INSERT_TO" in entry:
+                if entry["INSERT_TO"] == "START":
+                    company_frame_json_data.insert(0, entry)
+                elif entry["INSERT_TO"] == "END":
+                    company_frame_json_data.append(entry)
+            elif "children" in entry:
                 for child_entry in entry["children"]:
                     if "DELETE_ID" in child_entry:
                         remove_frame_question(child_entry["DELETE_ID"])
@@ -610,13 +627,14 @@ if not overlay_survey_json_data:
     exit()
 print("Haetaan olemassa olevat kyselyt.")
 credentials = get_credentials()
-surveys = get_existing_surveys(credentials)
-if is_existing_survey(company_name, survey_name, surveys):
-    print("Kysely on jo olemassa. Poista vanha kysely FluidSurveysista")
-    # TODO: Add possibility to delete existing survey.
-    exit()
-else:
-    print("Kyselyä ei löytynyt. Luodaan uusi kysely.")
+if len(sys.argv) != 6 or sys.argv[5] != "BYPASS":
+    surveys = get_existing_surveys(credentials)
+    if is_existing_survey(company_name, survey_name, surveys):
+        print("Kysely on jo olemassa. Poista vanha kysely FluidSurveysista")
+        # TODO: Add possibility to delete existing survey.
+        exit()
+    else:
+        print("Kyselyä ei löytynyt. Luodaan uusi kysely.")
 questions_version = get_latest_questions_version()
 print("Käytetään IMQ-kysymyspatteriston versiota {}".format(questions_version))
 company_survey_json_data = get_flattened_questions()
