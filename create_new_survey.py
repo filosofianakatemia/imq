@@ -21,6 +21,7 @@ def create_survey(survey_json_data, *args, **kwargs):
 
     else:
         print(new_survey_response.status_code)
+        print(new_survey_response.text)
         return None
 
 
