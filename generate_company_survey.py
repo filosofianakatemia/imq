@@ -159,9 +159,9 @@ def rename_frame_question(question_id, question):
         if "children" in entry:
             for index, child_entry in enumerate(entry["children"]):
                 if child_entry["id"] == question_id:
-                    question_title = question["title"]["fi"] if "fi" in question["title"] else question["title"]["en"]
                     child_entry_title = child_entry["title"]["fi"] if "fi" in child_entry["title"] else child_entry["title"]["en"]
                     if "title" in question:
+                        question_title = question["title"]["fi"] if "fi" in question["title"] else question["title"]["en"]
                         print("nimettiin\t{0}\t\"{1}\"\n"
                               "uudelleen\t\t\"{2}\""
                               .format(child_entry["id"],
@@ -416,16 +416,19 @@ def get_overlay_frame_and_merge_with_master():
         SURVEY_DATA_BASE_PATH,
         company_name,
         survey_name))
+    has_start_page = False
     if os.path.isfile(overlay_frame_json_file_path):
         # Merge overlay frame with master.
         overlay_frame_json_data = read_json_file(overlay_frame_json_file_path)
 
         for entry in overlay_frame_json_data:
             if "type" in entry and entry["type"] == "page" and "INSERT_TO" in entry:
+                overlay_page_copy = copy.deepcopy(entry)
                 if entry["INSERT_TO"] == "START":
-                    company_frame_json_data.insert(0, entry)
+                    company_frame_json_data.insert(0, overlay_page_copy)
+                    has_start_page = True
                 elif entry["INSERT_TO"] == "END":
-                    company_frame_json_data.append(entry)
+                    company_frame_json_data.append(overlay_page_copy)
             elif "children" in entry:
                 for child_entry in entry["children"]:
                     if "DELETE_ID" in child_entry:
@@ -440,10 +443,11 @@ def get_overlay_frame_and_merge_with_master():
                                               child_entry)
         # If the page does not have any children anymore, remove entire page
         remove_frame_empty_pages()
+    return has_start_page
 
-def add_survey_frame():
-    # Add survey frame. Last question goes to the end of the survey.
-    PREPENDING_QUESTIONS_IN_FRAME = len(company_frame_json_data) - 1
+def add_survey_frame(has_start_page):
+    # Add survey frame. Append after optional start page, IMQ front page and basic information.
+    PREPENDING_QUESTIONS_IN_FRAME = 3 if has_start_page else 2
     company_survey_json_data["form"] = company_frame_json_data[
         :PREPENDING_QUESTIONS_IN_FRAME] + company_survey_json_data[
         "form"] + company_frame_json_data[PREPENDING_QUESTIONS_IN_FRAME:]
@@ -672,8 +676,8 @@ print("Kysymysten lisääminen on valmis. Kysely sisältää {0} kysymystä.\n"
 
 paginate_survey()
 company_frame_json_data = get_survey_frame()
-get_overlay_frame_and_merge_with_master()
-add_survey_frame()
+has_start_page = get_overlay_frame_and_merge_with_master()
+add_survey_frame(has_start_page)
 print("Lisätään analyysisyntaksin tiedot.")
 merge_sum_formulas()
 print("Analyysisyntaksin tiedot lisätty. Poistetaan syntaksin muuttujat, "
