@@ -37,6 +37,13 @@ def get_survey_json_data(company_name, survey_name):
                                      survey_name))
     return read_json_file(survey_json_file_path)
 
+def get_survey_lang(survey_json_data):
+    if "languages" in survey_json_data:
+        for language in survey_json_data["languages"]:
+            if language["isDefault"]:
+                return language["code"]
+    # default to fi if no default language found
+    return "fi"
 
 def get_credentials():
     credentials = {}
@@ -315,10 +322,8 @@ def get_title_for_question(question_id):
         if "children" in entry:
             for child_entry in entry["children"]:
                 if child_entry["id"] == question_id and "title" in child_entry:
-                    if "fi" in child_entry["title"]:
-                        title = child_entry["title"]["fi"]
-                    elif "en" in child_entry["title"]:
-                        title = child_entry["title"]["en"]
+                    if survey_lang in child_entry["title"]:
+                        title = child_entry["title"][survey_lang]
                     break
     return title
 
@@ -471,6 +476,7 @@ survey_name = survey_info["survey_name"]
 # Get questions, or call get_survey with survey_id.
 survey_json_data = get_survey_json_data(company_name, survey_name)
 survey_id = survey_json_data["id"]
+survey_lang = get_survey_lang(survey_json_data)
 credentials = get_credentials()
 email = credentials["email"]
 password = credentials["password"]
