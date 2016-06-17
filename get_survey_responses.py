@@ -323,7 +323,7 @@ def get_title_for_question(question_id):
             for child_entry in entry["children"]:
                 if child_entry["id"] == question_id and "title" in child_entry:
                     if survey_lang in child_entry["title"]:
-                        title = child_entry["title"][survey_lang]
+                        title = child_entry["title"][survey_lang].replace("'", "''").replace("\"", "\"\"")
                     break
     return title
 
